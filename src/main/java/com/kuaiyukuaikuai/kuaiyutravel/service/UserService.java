@@ -1,0 +1,23 @@
+package com.kuaiyukuaikuai.kuaiyutravel.service;
+
+import com.kuaiyukuaikuai.kuaiyutravel.dto.LoginFormDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
+import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.servlet.http.HttpSession;
+
+/**
+* @author 0
+* @description 针对表【tb_user】的数据库操作Service
+* @createDate 2026-04-17 11:08:15
+*/
+public interface UserService extends IService<User> {
+
+    Result sendCode(String phone, HttpSession session);
+
+    Result login(LoginFormDTO loginForm, HttpSession session);
+
+    Result sign();
+
+    Result signCount();
+}
