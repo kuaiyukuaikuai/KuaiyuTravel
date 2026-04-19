@@ -88,9 +88,11 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         // 1.判断是否需要根据坐标查询
         if (x == null || y == null) {
             // 不需要坐标查询，按数据库查询
-            // 根据类型分页查询
+            // 根据类型分页查询，添加排序规则
             Page<Poi> page = query()
                     .eq("type_id", typeId)
+                    .orderByDesc("score")
+                    .orderByDesc("id")
                     .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
             // 返回数据
             return Result.ok(page.getRecords());
@@ -139,7 +141,3 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         return Result.ok(pois);
     }
 }
-
-
-
-

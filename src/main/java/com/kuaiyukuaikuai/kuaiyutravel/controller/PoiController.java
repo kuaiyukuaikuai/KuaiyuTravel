@@ -95,6 +95,8 @@ public class PoiController {
         // 根据类型分页查询
         Page<Poi> page = poiService.query()
                 .like(StrUtil.isNotBlank(name), "name", name)
+                .orderByDesc("score")
+                .orderByDesc("id")
                 .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         // 返回数据
         return Result.ok(page.getRecords());
