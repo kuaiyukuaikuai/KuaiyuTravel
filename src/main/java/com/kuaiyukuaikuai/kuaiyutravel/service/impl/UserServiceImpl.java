@@ -105,6 +105,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public Result logout(String token) {
+        // 1. 构建Redis中的token key
+        String tokenKey = LOGIN_USER_KEY + token;
+        
+        // 2. 删除Redis中的用户登录信息
+        stringRedisTemplate.delete(tokenKey);
+        
+        // 3. 清除ThreadLocal中的用户信息
+        UserHolder.removeUser();
+        
+        log.debug("用户登出成功，token: {}", token);
+        return Result.ok();
+    }
+
+    @Override
     public Result sign() {
         // 1.获取当前登录用户
         Long userId = UserHolder.getUser().getId();

@@ -17,6 +17,8 @@ public interface UserService extends IService<User> {
 
     Result login(LoginFormDTO loginForm, HttpSession session);
 
+    Result logout(String token);
+
     Result sign();
 
     Result signCount();

@@ -63,9 +63,15 @@ public class UserController {
      * @return 无
      */
     @PostMapping("/logout")
-    public Result logout() {
-        // TODO 实现登出功能
-        return Result.fail("功能未完成");
+    public Result logout(jakarta.servlet.http.HttpServletRequest request) {
+        // 1. 从请求头获取token
+        String token = request.getHeader("authorization");
+        if (cn.hutool.core.util.StrUtil.isBlank(token)) {
+            return Result.fail("未登录");
+        }
+        
+        // 2. 调用userService执行登出逻辑
+        return userService.logout(token);
     }
 
     @GetMapping("/me")
