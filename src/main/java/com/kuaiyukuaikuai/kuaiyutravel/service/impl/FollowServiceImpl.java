@@ -36,7 +36,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private UserService userService;
     @Override
     public Result follow(Long followUserId, Boolean isFollow) {
-        Long userId = UserHolder.getUser().getId();
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
         // 1.判断关注还是取关
 
         if (isFollow) {
@@ -69,7 +73,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
      */
     @Override
     public Result isFollow(Long followUserId) {
-        Long userId = UserHolder.getUser().getId();
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
         Long count = query()
                 .eq("user_id", userId)
                 .eq("follow_user_id", followUserId).count();
@@ -78,7 +86,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Override
     public Result followCommons(Long id) {
-        Long userId = UserHolder.getUser().getId();
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
         Set<String> intersect = stringRedisTemplate.opsForSet().intersect("follows:" + id, "follows:" + userId);
         if (intersect == null || intersect.isEmpty()) {
             return Result.ok(Collections.emptyList());
@@ -88,7 +100,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         //查询用户
         List<UserDTO> users = userService.listByIds(ids)
                 .stream()
-                .map(user -> BeanUtil.copyProperties(user,UserDTO.class))
+                .map(u -> BeanUtil.copyProperties(u,UserDTO.class))
                 .collect(Collectors.toList());
         return Result.ok(users);
     }

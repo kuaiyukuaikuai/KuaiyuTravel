@@ -90,11 +90,12 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     private void isBlogLiked(Blog blog) {
         // 获取用户
-        Long userId = UserHolder.getUser().getId();
-        if (userId == null) {
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
             // 用户未登录，无需查询是否点赞
             return;
         }
+        Long userId = user.getId();
         // 判断是否已经点过赞
         String key = "blog:liked:" + blog.getId();
         Double score = stringRedisTemplate.opsForZSet().score(key, userId.toString());
@@ -111,7 +112,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Override
     public Result likeBlog(Long id) {
         // 1.获取用户
-        Long userId = UserHolder.getUser().getId();
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
 
         // 2.判断是否已经点过赞
         String key = "blog:liked:" + id;
@@ -167,6 +172,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     public Result saveBlog(Blog blog) {
         // 获取登录用户
         UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
         blog.setUserId(user.getId());
         // 保存探店博文
         boolean isSuccess = save(blog);
@@ -188,7 +196,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Override
     public Result queryBlogOfFollow(Long max, Integer offset) {
         // 1.获取当前用户
-        Long userId = UserHolder.getUser().getId();
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
 
         // 2.查询收件箱
         String key = "feed:" + userId;
