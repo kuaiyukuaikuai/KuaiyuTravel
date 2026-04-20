@@ -31,8 +31,8 @@ public class VoucherOrderController {
     }
 
 
-/*    @PostMapping("common/{id}")
+   @PostMapping("common/{id}")
     public Result commonVoucher(@PathVariable("id") Long voucherId) {
         return voucherOrderService.commonVoucher(voucherId);
-    }*/
+    }
 }
