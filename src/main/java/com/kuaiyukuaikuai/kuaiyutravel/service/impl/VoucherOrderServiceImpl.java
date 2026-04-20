@@ -381,62 +381,67 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
 
 
-    @Transactional
     @Override
+    @Transactional
     public Result commonVoucher(Long voucherId) {
         // 1. 获取当前登录用户
         Long userId = UserHolder.getUser().getId();
 
-        // 2. 查询优惠券 (普通券的详情查询如果在别处已经做了 Redis 缓存，这里查 DB 也很快)
-        Voucher voucher = voucherService.getById(voucherId);
-        if (voucher == null) {
-            return Result.fail("优惠券不存在！");
-        }
+        // 2. 生成分布式锁 key
+        String lockKey = "lock:order:" + userId + ":" + voucherId;
 
-        // 3. 判断库存是否充足 (这里是初步判断，拦截掉大部分无效请求)
-        if (voucher.getStock() < 1) {
-            return Result.fail("库存不足！");
-        }
+        // 3. 获取分布式锁
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean isLocked = false;
 
-        // ==========================================================
-        // 4. MyBatis-Plus 乐观锁扣减库存 (核心重点)
-        // SQL: UPDATE tb_voucher SET stock = stock - 1 WHERE id = ? AND stock > 0
-        // ==========================================================
-        boolean success = voucherService.update(
-                new LambdaUpdateWrapper<Voucher>() //构建一个原子性的 SQL 更新操作
-                        .eq(Voucher::getId, voucherId)         // WHERE id = ?
-                        .gt(Voucher::getStock, 0)              // AND stock > 0
-                        .setSql("stock = stock - 1")           // SET stock = stock - 1
-        );
-
-        // 如果 success 为 false，说明在执行这句 SQL 的瞬间，库存已经被别人扣到 0 了
-        if (!success) {
-            return Result.fail("库存不足！");
-        }
-
-        // 5. 创建订单
-        VoucherOrder voucherOrder = new VoucherOrder();
-        // 5.1 设置订单全局唯一 ID (复用雪花算法工具类)
-        long orderId = redisIdWorker.nextId("order");
-        voucherOrder.setId(orderId);
-        // 5.2 设置用户 ID
-        voucherOrder.setUserId(userId);
-        // 5.3 设置代金券 ID
-        voucherOrder.setVoucherId(voucherId);
-
-        // ==========================================================
-        // 6. 保存订单并利用“联合唯一索引”兜底一人一单
-        // ==========================================================
         try {
-            this.save(voucherOrder);
-        } catch (DuplicateKeyException e) {
-            // 如果触发了 tb_voucher_order 表中 user_id 和 voucher_id 的唯一索引冲突
-            // Spring 会抛出 DuplicateKeyException，我们捕获它并返回友好提示
-            return Result.fail("您已经购买过该券，不可重复购买！");
-        }
+            // 尝试获取锁，设置 10 秒超时
+            isLocked = lock.tryLock(10, TimeUnit.SECONDS);
+            if (!isLocked) {
+                // 获取锁失败，返回错误
+                return Result.fail("系统繁忙，请稍后再试");
+            }
 
-        // 7. 返回订单 ID
-        return Result.ok(orderId);
+            // 4. 查询优惠券信息
+            Voucher voucher = voucherService.getById(voucherId);
+            if (voucher == null) {
+                return Result.fail("优惠券不存在！");
+            }
+
+            // 5. 检查是否已经购买过
+            Long count = query()
+                    .eq("user_id", userId)
+                    .eq("voucher_id", voucherId)
+                    .count();
+            if (count > 0) {
+                return Result.fail("您已经购买过该券，不可重复购买！");
+            }
+
+            // 6. 创建订单
+            VoucherOrder voucherOrder = new VoucherOrder();
+            // 6.1 设置订单全局唯一 ID
+            long orderId = redisIdWorker.nextId("order");
+            voucherOrder.setId(orderId);
+            // 6.2 设置用户 ID
+            voucherOrder.setUserId(userId);
+            // 6.3 设置代金券 ID
+            voucherOrder.setVoucherId(voucherId);
+
+            // 7. 保存订单
+            this.save(voucherOrder);
+
+            // 8. 返回订单 ID
+            return Result.ok(orderId);
+        } catch (InterruptedException e) {
+            // 处理中断异常
+            log.error("获取锁中断", e);
+            return Result.fail("系统繁忙，请稍后再试");
+        } finally {
+            // 释放锁
+            if (isLocked) {
+                lock.unlock();
+            }
+        }
     }
 }
 
