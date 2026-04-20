@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -106,12 +107,12 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo().search(
                 key,
                 GeoReference.fromCoordinate(x, y),// 坐标
-                new Distance(5000),// 距离
+                new Distance(500, RedisGeoCommands.DistanceUnit.KILOMETERS),// 距离，单位：公里
                 //includeDistance()返回距离
                 RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().limit(end)
         );
         // 4.解析出id
-        if (results == null){
+        if (results == null) {
             return Result.ok(Collections.emptyList());
         }
         List<GeoResult<RedisGeoCommands.GeoLocation<String>>> list = results.getContent();
@@ -122,7 +123,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         // 截取from 到 end的部分
         List<Long> ids = new ArrayList<>(list.size());
         Map<String, Distance> distanceMap = new HashMap<>(list.size());
-        list.stream().skip(from).forEach(result->{
+        list.stream().skip(from).forEach(result -> {
             // 获取地点id
             String poiIdStr = result.getContent().getName();
             ids.add(Long.valueOf(poiIdStr));// 收集地点 ID 准备去 MySQL 查详情
