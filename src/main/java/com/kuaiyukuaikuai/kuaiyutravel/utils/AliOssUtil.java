@@ -31,7 +31,7 @@ public class AliOssUtil {
      * @param file 上传的文件
      * @return OSS 上的外网访问 URL
      */
-    public String upload(MultipartFile file) {
+    public String upload(MultipartFile file, String dirName) {
         try {
             // 获取原始文件名和后缀
             String originalFilename = file.getOriginalFilename();
@@ -48,8 +48,8 @@ public class AliOssUtil {
             // 获取当前日期并格式化为 yyyy/MM/dd
             String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
             
-            // 构建完整路径：blogs/年/月/日/uuid.后缀
-            String filePath = "blogs/" + datePath + "/" + uuid + suffix;
+            // 构建完整路径：目录名/年/月/日/uuid.后缀
+            String filePath = dirName + "/" + datePath + "/" + uuid + suffix;
             
             // 创建 OSS 客户端
             OSS ossClient = new OSSClientBuilder().build(

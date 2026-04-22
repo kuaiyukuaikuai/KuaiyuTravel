@@ -2,9 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.LoginFormDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.dto.*;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.UserInfo;
 import com.kuaiyukuaikuai.kuaiyutravel.service.BlogService;
@@ -126,5 +124,32 @@ public class UserController {
     @GetMapping("/sign/count")
     public Result signCount() {
         return userService.signCount();
+    }
+
+
+    /**
+     * 修改用户基本资料 (昵称、头像)
+     */
+    @PutMapping("/info")
+    public Result updateUserInfo(@RequestBody UserUpdateDTO updateDTO) {
+        // 交给 Service 层处理具体逻辑
+        return userService.updateUserInfo(updateDTO);
+    }
+
+    /**
+     * 修改密码
+     */
+    @PutMapping("/password")
+    public Result updatePassword(@RequestBody UserPasswordDTO passwordDTO) {
+        return userService.updatePassword(passwordDTO);
+    }
+
+    /**
+     * 密码登录功能
+     */
+    @PostMapping("/login/password")
+    public Result loginByPassword(@RequestBody LoginFormDTO loginForm) {
+        // 将具体的业务逻辑交给 Service 层处理
+        return userService.loginByPassword(loginForm);
     }
 }

@@ -4,21 +4,24 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.LoginFormDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.dto.*;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
 import com.kuaiyukuaikuai.kuaiyutravel.mapper.UserMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.RegexUtils;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -175,6 +178,134 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         return Result.ok(count);
 
+    }
+
+    @Override
+    public Result updateUserInfo(UserUpdateDTO updateDTO) {
+        // 1. 从当前线程(Token)中获取当前登录用户的 ID
+        Long userId = UserHolder.getUser().getId();
+
+        // 2. 构建需要更新的 User 对象
+        User user = new User();
+        user.setId(userId);
+        user.setNickName(updateDTO.getNickName());
+        user.setIcon(updateDTO.getIcon());
+
+        // 3. 调用 MyBatis-Plus 的更新方法 (只会更新非 null 的字段)
+        updateById(user);
+
+        return Result.ok();
+    }
+
+    @Override
+    public Result updatePassword(UserPasswordDTO passwordDTO) {
+        Long userId = UserHolder.getUser().getId();
+
+        String oldPassword = passwordDTO.getOldPassword();
+        String newPassword = passwordDTO.getNewPassword();
+
+        // 1. 校验新密码不能为空
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return Result.fail("新密码不能为空");
+        }
+
+        // 2. 查询当前用户信息
+        User user = getById(userId);
+        if (user == null) {
+            return Result.fail("用户不存在");
+        }
+
+        String dbPassword = user.getPassword();
+
+        // 3. 【核心逻辑分叉】
+        if (dbPassword == null || dbPassword.trim().isEmpty()) {
+            // 场景 A：首次设置密码
+            // 直接放行，进入下方的加密更新阶段
+        } else {
+            // 场景 B：修改密码，必须严格校验
+            if (oldPassword == null || oldPassword.trim().isEmpty()) {
+                return Result.fail("原密码不能为空");
+            }
+
+            // ⚔️ 校验旧密码是否正确
+            // BCrypt.checkpw(明文密码, 数据库里的密文) -> 返回 true 或 false
+            if (!BCrypt.checkpw(oldPassword, dbPassword)) {
+                return Result.fail("原密码输入错误");
+            }
+
+            // ⚔️ 校验新密码不能和旧密码一样
+            // 如果新密码的明文，能和数据库里的旧密文匹配上，说明新旧密码一样
+            if (BCrypt.checkpw(newPassword, dbPassword)) {
+                return Result.fail("新密码不能与原密码相同");
+            }
+        }
+
+        // 4. 对新密码进行 Bcrypt 加密 🔒
+        // BCrypt.hashpw 会自动生成随机盐并进行加密，生成一条长度为 60 的密文
+        String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+
+        // 5. 更新到数据库
+        User updateUser = new User();
+        updateUser.setId(userId);
+        updateUser.setPassword(hashedNewPassword); // 存入加密后的密文
+
+        updateById(updateUser);
+
+//         6. (可选) 清理 Redis 中的 Token，强制踢下线重新登录
+         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+         String token = request.getHeader("authorization");
+         stringRedisTemplate.delete("login:token:" + token);
+
+        return Result.ok();
+    }
+
+    @Override
+    public Result loginByPassword(LoginFormDTO loginForm) {
+        // 1. 获取前端传来的账号(这里以手机号 phone 为例)和密码
+        String phone = loginForm.getPhone();
+        String password = loginForm.getPassword();
+
+        // 2. 基本非空校验
+        if (StrUtil.isBlank(phone) || StrUtil.isBlank(password)) {
+            return Result.fail("手机号和密码不能为空");
+        }
+
+        // 3. 根据手机号去数据库查询用户
+        // query() 是 MyBatis-Plus 提供的链式查询方法
+        User user = query().eq("phone", phone).one();
+
+        // 4. 如果没查到，说明该账号还没注册
+        if (user == null) {
+            return Result.fail("该用户不存在，请先注册");
+        }
+
+        // 5. ⚔️ 核心：校验密码 (使用 Bcrypt)
+        // 注意：BCrypt.checkpw() 第一个参数是前端传的明文，第二个参数是数据库查出来的密文
+        if (!BCrypt.checkpw(password, user.getPassword())) {
+            return Result.fail("账号或密码错误");
+        }
+
+        // 6. 登录成功！生成随机的 Token 作为用户的“通行证”
+        String token = UUID.randomUUID().toString(true);
+
+        // 7. 保护隐私：绝对不能把包含密码的完整 User 存入 Redis，要转换成 UserDTO
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+
+        // 将 UserDTO 对象转为 HashMap，并且把所有字段值都转成 String 类型 (防止 Redis 存储 Long 类型 ID 时报错)
+        Map<String, Object> userMap = BeanUtil.beanToMap(userDTO, new HashMap<>(),
+                CopyOptions.create()
+                        .setIgnoreNullValue(true)
+                        .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
+
+        // 8. 存入 Redis，Key 为自定义前缀 + token
+        String tokenKey = "login:token:" + token;
+        stringRedisTemplate.opsForHash().putAll(tokenKey, userMap);
+
+        // 9. 设置 Token 的过期时间 (例如 30 分钟。用户如果不活跃，半小时后自动掉线)
+        stringRedisTemplate.expire(tokenKey, 30, TimeUnit.MINUTES);
+
+        // 10. 最终将生成的 token 返回给前端
+        return Result.ok(token);
     }
 
     private User createUserWithPhone(String phone) {

@@ -277,8 +277,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 }
             }
         }*/
-    }
 
+    }
     private void handleVoucherOrder(VoucherOrder voucherOrder) {
         // 获取用户
         Long userId = voucherOrder.getUserId();
@@ -297,6 +297,36 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             // 释放锁
             lock.unlock();
         }
+    }
+
+    /**
+     * 创建订单
+     *
+     * @param voucherOrder 订单信息
+     */
+    @Transactional
+    public void createVoucherOrder(VoucherOrder voucherOrder) {
+        // 5.1.用户id
+        Long userId = voucherOrder.getUserId();
+        long count = query().eq("user_id", userId).eq("voucher_id", voucherOrder.getVoucherId()).count();
+        // 5.2.判断是否存在
+        if (count > 0) {
+            // 用户已经购买过了
+            log.error("用户已经购买过一次！");
+            return;
+        }
+
+        //5，扣减库存
+        boolean success = seckillVoucherService.update()
+                .setSql("stock= stock -1")
+                .eq("voucher_id", voucherOrder.getVoucherId()).gt("stock", 0)
+                .update();
+        if (!success) {
+            //扣减库存
+            log.error("库存不足！");
+            return;
+        }
+        save(voucherOrder);
     }
 
 
@@ -348,36 +378,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
 
 
-
-    /**
-     * 创建订单
-     *
-     * @param voucherOrder 订单信息
-     */
-    @Transactional
-    public void createVoucherOrder(VoucherOrder voucherOrder) {
-        // 5.1.用户id
-        Long userId = voucherOrder.getUserId();
-        long count = query().eq("user_id", userId).eq("voucher_id", voucherOrder.getVoucherId()).count();
-        // 5.2.判断是否存在
-        if (count > 0) {
-            // 用户已经购买过了
-            log.error("用户已经购买过一次！");
-            return;
-        }
-
-        //5，扣减库存
-        boolean success = seckillVoucherService.update()
-                .setSql("stock= stock -1")
-                .eq("voucher_id", voucherOrder.getVoucherId()).gt("stock", 0)
-                .update();
-        if (!success) {
-            //扣减库存
-            log.error("库存不足！");
-            return;
-        }
-        save(voucherOrder);
-    }
 
 
 

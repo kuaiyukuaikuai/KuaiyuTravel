@@ -2,6 +2,8 @@ package com.kuaiyukuaikuai.kuaiyutravel.service;
 
 import com.kuaiyukuaikuai.kuaiyutravel.dto.LoginFormDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.dto.UserPasswordDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.dto.UserUpdateDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.http.HttpSession;
@@ -22,4 +24,10 @@ public interface UserService extends IService<User> {
     Result sign();
 
     Result signCount();
+
+    Result updateUserInfo(UserUpdateDTO updateDTO);
+
+    Result updatePassword(UserPasswordDTO passwordDTO);
+
+    Result loginByPassword(LoginFormDTO loginForm);
 }
