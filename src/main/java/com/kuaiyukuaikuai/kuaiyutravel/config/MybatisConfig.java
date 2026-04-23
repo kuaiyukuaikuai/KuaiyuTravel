@@ -1,6 +1,9 @@
 package com.kuaiyukuaikuai.kuaiyutravel.config;
 
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.annotation.MapperScan;
@@ -14,8 +17,18 @@ import javax.sql.DataSource;
 @MapperScan("com.kuaiyukuaikuai.kuaiyutravel.mapper")
 public class MybatisConfig {
 
+    // 👇👇👇 新增：定义分页拦截器 Bean 👇👇👇
     @Bean
-    public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        // 添加分页拦截器，并指定数据库类型为 MySQL
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        return interceptor;
+    }
+
+    // 注意这里参数里加上了 MybatisPlusInterceptor，让 Spring 自动注入进来
+    @Bean
+    public SqlSessionFactory sqlSessionFactory(DataSource dataSource, MybatisPlusInterceptor mybatisPlusInterceptor) throws Exception {
         MybatisSqlSessionFactoryBean sessionFactory = new MybatisSqlSessionFactoryBean();
 
         // 1. 数据源
@@ -29,14 +42,15 @@ public class MybatisConfig {
                 new PathMatchingResourcePatternResolver().getResources("classpath*:/mapper/**/*.xml")
         );
 
-        // 👇👇👇 核心新增：手动配置全局表前缀 tb_ 👇👇👇
+        // 手动配置全局表前缀 tb_
         GlobalConfig globalConfig = new GlobalConfig();
         GlobalConfig.DbConfig dbConfig = new GlobalConfig.DbConfig();
         dbConfig.setTablePrefix("tb_"); // 告诉它所有表都有 tb_
         globalConfig.setDbConfig(dbConfig);
-
         sessionFactory.setGlobalConfig(globalConfig);
-        // 👆👆👆 核心新增结束 👆👆👆
+
+        // 👇👇👇 新增：手动将分页拦截器塞入你自定义的 sessionFactory 中 👇👇👇
+        sessionFactory.setPlugins(mybatisPlusInterceptor);
 
         return sessionFactory.getObject();
     }
