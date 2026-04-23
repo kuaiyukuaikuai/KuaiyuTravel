@@ -2,6 +2,9 @@ package com.kuaiyukuaikuai.kuaiyutravel.mapper;
 
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Poi;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
 * @author 0
@@ -11,6 +14,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface PoiMapper extends BaseMapper<Poi> {
 
+    @Select("select id from tb_poi")
+    List<Long> selectIdList();
 }
 
 

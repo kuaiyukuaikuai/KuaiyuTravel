@@ -14,7 +14,10 @@ import com.kuaiyukuaikuai.kuaiyutravel.utils.CacheClient;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.RedisData;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.GeoUnit;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResult;
 import org.springframework.data.geo.GeoResults;
@@ -41,6 +44,7 @@ import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.*;
  * @author 0
  * @since 2026-04-17
  */
+@Slf4j
 @Service
 public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiService {
 
@@ -48,26 +52,47 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private CacheClient cacheClient;
+    @Resource
+    private RedissonClient redissonClient;
 
     @Override
     public Result queryPoiById(Long id) {
         // 解决缓存穿透
         //        Poi poi = cacheClient
         //                .queryWithPassThrough(CACHE_SHOP_KEY, id, Poi.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+        // 逻辑过期解决缓存击穿
+        //         Poi poi = cacheClient
+        //                .queryWithLogicalExpire(CACHE_SHOP_KEY, id, Poi.class, this::getById, 20L, TimeUnit.SECONDS);
+
+        // ================== 1. 布隆过滤器前置拦截 ==================
+        // 获取布隆过滤器
+        RBloomFilter<Long> bloomFilter = redissonClient.getBloomFilter("poi:bloom-filter");
+
+        // 判断 ID 是否存在于过滤器中
+        if (!bloomFilter.contains(id)) {
+            // 核心防御：布隆过滤器说没有，那就绝对没有！
+            // 直接返回，绝不允许这个伪造的请求去查 Redis，更不准去查 MySQL
+            log.warn("触发布隆过滤器拦截，恶意查询不存在的景点 ID: {}", id);
+            return Result.fail("您查询的景点不存在！");
+        }
+
+        // ================== 2. 原有的缓存与数据库逻辑 ==================
+        // 走到这里，说明布隆过滤器认为该 ID "可能存在"（允许 3% 的误判率）。
+        // 接下来走你原来封装好的逻辑：先查 Redis，如果没有再尝试获取互斥锁去查 MySQL。
 
         // 互斥锁解决缓存击穿
         Poi poi = cacheClient
                 .queryWithMutex(CACHE_SHOP_KEY, id, Poi.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
 
-        // 逻辑过期解决缓存击穿
-        //         Poi poi = cacheClient
-        //                .queryWithLogicalExpire(CACHE_SHOP_KEY, id, Poi.class, this::getById, 20L, TimeUnit.SECONDS);
-
+        // 应对布隆过滤器的极小概率“误判”：如果真的误判放过来了，最后查出来还是 null，这里做最终兜底
         if (poi == null) {
             return Result.fail("地点不存在！");
         }
-        // 7.返回
+
+        // 3. 正常返回
         return Result.ok(poi);
+
+
     }
 
     @Override
@@ -140,5 +165,23 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         }
         // 6.返回
         return Result.ok(pois);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void savePoiWithBloomFilter(Poi poi) {
+        // 1. 先写入数据库
+        // 注意：这里用 this.save()，如果出错会自动抛出异常，不再执行后续代码
+        this.save(poi);
+
+        // 2. 数据库写入成功，拿到自增的 ID，写入布隆过滤器
+        try {
+            redissonClient.getBloomFilter("poi:bloom-filter").add(poi.getId());
+            log.info("POI 添加成功，已同步至布隆过滤器，ID: {}", poi.getId());
+        } catch (Exception e) {
+            // 如果 Redis 添加失败，抛出运行时异常，强制触发上面的 @Transactional 回滚数据库
+            log.error("同步布隆过滤器失败，数据库操作将回滚，POI ID: {}", poi.getId(), e);
+            throw new RuntimeException("系统繁忙，保存失败");
+        }
     }
 }

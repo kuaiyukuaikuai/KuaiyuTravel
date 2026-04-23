@@ -16,5 +16,7 @@ public interface PoiService extends IService<Poi> {
     Result update(Poi poi);
 
     Result queryPoiByType(Integer typeId, Integer current, Double x, Double y);
+
+    void savePoiWithBloomFilter(Poi poi);
 }
 

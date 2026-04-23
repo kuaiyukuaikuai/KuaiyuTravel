@@ -5,8 +5,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Poi;
+import com.kuaiyukuaikuai.kuaiyutravel.mapper.PoiMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.service.PoiService;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
+import org.redisson.api.RedissonClient;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
@@ -16,8 +18,7 @@ import jakarta.annotation.Resource;
  * 前端控制器
  * </p>
  *
- * @author 虎哥
- * @since 2021-12-22
+ * @author 快鱼快快
  */
 @RestController
 @RequestMapping("/poi")
@@ -25,6 +26,8 @@ public class PoiController {
 
     @Resource
     public PoiService poiService;
+    @Resource
+    public RedissonClient redissonClient;
 
     /**
      * 根据id查询地点信息
@@ -45,9 +48,7 @@ public class PoiController {
      */
     @PostMapping
     public Result savePoi(@RequestBody Poi poi) {
-        // 写入数据库
-        poiService.save(poi);
-        // 返回店铺id
+        poiService.savePoiWithBloomFilter(poi);
         return Result.ok(poi.getId());
     }
 
