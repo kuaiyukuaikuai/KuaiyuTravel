@@ -7,6 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 上传控制器
+ * 处理文件上传相关的请求
+ * 
+ * @author 0
+ * @since 2026-04-17
+ */
 @Slf4j
 @RestController
 @RequestMapping("upload")
@@ -15,36 +22,15 @@ public class UploadController {
     @Autowired
     private AliOssUtil aliOssUtil;
 
-/*    @PostMapping("blog")
-    public Result uploadImage(@RequestParam("file") MultipartFile image) {
-        try {
-            // 使用阿里云 OSS 上传文件
-            String ossUrl = aliOssUtil.upload(image);
-            // 返回 OSS URL
-            return Result.ok(ossUrl);
-        } catch (Exception e) {
-            log.error("文件上传失败", e);
-            throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
-        }
-    }
-
-    @PostMapping("icon")
-    public Result uploadIcon(@RequestParam("file") MultipartFile image) {
-        try {
-            // 使用阿里云 OSS 上传文件
-            String ossUrl = aliOssUtil.upload(image);
-            // 返回 OSS URL
-            return Result.ok(ossUrl);
-        } catch (Exception e) {
-            log.error("文件上传失败", e);
-            throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
-        }
-    }*/
     /**
      * 统一上传接口
      * 请求路径示例：
      * POST /upload/blogs  -> 传到 blogs 文件夹
      * POST /upload/icons  -> 传到 icons 文件夹
+     * 
+     * @param file 上传的文件
+     * @param dir 上传目录
+     * @return 上传结果
      */
     @PostMapping("/{dir}")
     public Result uploadFile(@RequestParam("file") MultipartFile file,

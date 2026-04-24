@@ -1,15 +1,12 @@
 package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
-
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * <p>
- *  前端控制器
- * </p>
- *
+ * 博客评论控制器
+ * 处理博客评论相关的请求
+ * 
  * @author 0
  * @since 2026-04-17
  */

@@ -1,6 +1,5 @@
 package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
-
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Voucher;
 import com.kuaiyukuaikuai.kuaiyutravel.service.VoucherService;
@@ -9,10 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 
 /**
- * <p>
- *  前端控制器
- * </p>
- *
+ * 优惠券控制器
+ * 处理优惠券相关的请求
+ * 
  * @author 虎哥
  * @since 2021-12-22
  */
@@ -25,6 +23,7 @@ public class VoucherController {
 
     /**
      * 新增普通券
+     * 
      * @param voucher 优惠券信息
      * @return 优惠券id
      */
@@ -36,6 +35,7 @@ public class VoucherController {
 
     /**
      * 新增秒杀券
+     * 
      * @param voucher 优惠券信息，包含秒杀信息
      * @return 优惠券id
      */
@@ -47,6 +47,7 @@ public class VoucherController {
 
     /**
      * 查询店铺的优惠券列表
+     * 
      * @param poiId 店铺id
      * @return 优惠券列表
      */

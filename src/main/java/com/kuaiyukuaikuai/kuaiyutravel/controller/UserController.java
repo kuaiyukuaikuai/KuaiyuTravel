@@ -1,6 +1,5 @@
 package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
-
 import cn.hutool.core.bean.BeanUtil;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.*;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
@@ -16,10 +15,9 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * <p>
- * 前端控制器
- * </p>
- *
+ * 用户控制器
+ * 处理用户相关的请求
+ * 
  * @author 快鱼
  * @since 2026-04-17
  */
@@ -39,6 +37,10 @@ public class UserController {
 
     /**
      * 发送手机验证码
+     * 
+     * @param phone 手机号
+     * @param session 会话
+     * @return 发送结果
      */
     @PostMapping("code")
     public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
@@ -47,8 +49,10 @@ public class UserController {
 
     /**
      * 登录功能
-     *
+     * 
      * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
+     * @param session 会话
+     * @return 登录结果
      */
     @PostMapping("/login")
     public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session) {
@@ -57,8 +61,9 @@ public class UserController {
 
     /**
      * 登出功能
-     *
-     * @return 无
+     * 
+     * @param request 请求
+     * @return 登出结果
      */
     @PostMapping("/logout")
     public Result logout(jakarta.servlet.http.HttpServletRequest request) {
@@ -72,12 +77,23 @@ public class UserController {
         return userService.logout(token);
     }
 
+    /**
+     * 获取当前登录用户信息
+     * 
+     * @return 用户信息
+     */
     @GetMapping("/me")
     public Result me() {
         // 获取当前登录的用户并返回
         return Result.ok(UserHolder.getUser());
     }
 
+    /**
+     * 获取用户详情
+     * 
+     * @param userId 用户id
+     * @return 用户详情
+     */
     @GetMapping("/info/{id}")
     public Result info(@PathVariable("id") Long userId) {
         // 查询详情
@@ -92,8 +108,12 @@ public class UserController {
         return Result.ok(info);
     }
 
-    // UserController 根据id查询用户
-
+    /**
+     * 根据id查询用户
+     * 
+     * @param userId 用户id
+     * @return 用户信息
+     */
     @GetMapping("/{id}")
     public Result queryUserById(@PathVariable("id") Long userId) {
         // 查询详情
@@ -108,8 +128,8 @@ public class UserController {
 
     /**
      * 签到功能
-     *
-     * @return
+     * 
+     * @return 签到结果
      */
     @PostMapping("/sign")
     public Result sign() {
@@ -118,17 +138,19 @@ public class UserController {
 
     /**
      * 统计签到功能
-     *
-     * @return
+     * 
+     * @return 签到统计结果
      */
     @GetMapping("/sign/count")
     public Result signCount() {
         return userService.signCount();
     }
 
-
     /**
      * 修改用户基本资料 (昵称、头像)
+     * 
+     * @param updateDTO 用户更新信息
+     * @return 更新结果
      */
     @PutMapping("/info")
     public Result updateUserInfo(@RequestBody UserUpdateDTO updateDTO) {
@@ -138,6 +160,9 @@ public class UserController {
 
     /**
      * 修改密码
+     * 
+     * @param passwordDTO 密码更新信息
+     * @return 更新结果
      */
     @PutMapping("/password")
     public Result updatePassword(@RequestBody UserPasswordDTO passwordDTO) {
@@ -146,6 +171,9 @@ public class UserController {
 
     /**
      * 密码登录功能
+     * 
+     * @param loginForm 登录参数
+     * @return 登录结果
      */
     @PostMapping("/login/password")
     public Result loginByPassword(@RequestBody LoginFormDTO loginForm) {

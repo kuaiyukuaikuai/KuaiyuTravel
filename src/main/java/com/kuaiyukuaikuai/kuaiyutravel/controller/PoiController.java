@@ -1,11 +1,9 @@
 package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
-
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Poi;
-import com.kuaiyukuaikuai.kuaiyutravel.mapper.PoiMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.service.PoiService;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
 import org.redisson.api.RedissonClient;
@@ -14,11 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 
 /**
- * <p>
- * 前端控制器
- * </p>
- *
+ * 地点控制器
+ * 处理地点相关的请求
+ * 
  * @author 快鱼快快
+ * @since 2026-04-17
  */
 @RestController
 @RequestMapping("/poi")
@@ -26,12 +24,13 @@ public class PoiController {
 
     @Resource
     public PoiService poiService;
+    
     @Resource
     public RedissonClient redissonClient;
 
     /**
      * 根据id查询地点信息
-     *
+     * 
      * @param id 地点id
      * @return 地点详情数据
      */
@@ -42,7 +41,7 @@ public class PoiController {
 
     /**
      * 新增地点信息
-     *
+     * 
      * @param poi 地点数据
      * @return 地点id
      */
@@ -54,9 +53,9 @@ public class PoiController {
 
     /**
      * 更新地点信息
-     *
+     * 
      * @param poi 地点数据
-     * @return 无
+     * @return 更新结果
      */
     @PutMapping
     public Result updatePoi(@RequestBody Poi poi) {
@@ -66,9 +65,11 @@ public class PoiController {
 
     /**
      * 根据地点类型分页查询地点信息
-     *
-     * @param typeId  地点类型
+     * 
+     * @param typeId 地点类型
      * @param current 页码
+     * @param x 经度
+     * @param y 纬度
      * @return 地点列表
      */
     @GetMapping("/of/type")
@@ -83,8 +84,8 @@ public class PoiController {
 
     /**
      * 根据地点名称关键字分页查询地点信息
-     *
-     * @param name    地点名称关键字
+     * 
+     * @param name 地点名称关键字
      * @param current 页码
      * @return 地点列表
      */
