@@ -1,6 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.kuaiyukuaikuai.kuaiyutravel.annotation.RateLimit;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Blog;
@@ -32,6 +33,7 @@ public class BlogController {
      * @param blog 博客信息
      * @return 保存结果
      */
+    @RateLimit(time = 60, msg = "发布博客太快啦，请60秒后再试", prefix = "blog:save:")
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
         return blogService.saveBlog(blog);
