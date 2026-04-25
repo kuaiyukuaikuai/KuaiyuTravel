@@ -22,6 +22,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +44,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 查询热门博客
+     *
      * @param current 当前页码
      * @return 热门博客列表
      */
@@ -64,6 +66,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 根据ID查询博客
+     *
      * @param id 博客ID
      * @return 博客详情
      */
@@ -83,6 +86,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 判断博客是否被点赞
+     *
      * @param blog 博客信息
      */
     private void isBlogLiked(Blog blog) {
@@ -101,6 +105,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 查询博客用户信息
+     *
      * @param blog 博客信息
      */
     private void queryBlogUser(Blog blog) {
@@ -112,6 +117,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 点赞博客
+     *
      * @param id 博客ID
      * @return 操作结果
      */
@@ -149,6 +155,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 查询博客点赞用户
+     *
      * @param id 博客ID
      * @return 点赞用户列表
      */
@@ -180,6 +187,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 保存博客
+     *
      * @param blog 博客信息
      * @return 保存结果
      */
@@ -210,7 +218,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 查询关注用户的博客
-     * @param max 最大ID
+     *
+     * @param max    最大ID
      * @param offset 偏移量
      * @return 博客列表
      */
@@ -267,12 +276,19 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 根据地点id查询博客
-     * @param poiId 地点id
+     *
+     * @param poiId   地点id
      * @param current 当前页码
      * @return 博客列表
      */
     @Override
     public Result queryBlogByPoiId(Integer current, Long poiId) {
+        // 深度分页防御机制
+        // 如果用户恶意传入非常大的页码（比如大于 100），直接返回空列表
+        if (current > 100) {
+            // 返回空数组，不去给 MySQL 数据库施加压力
+            return Result.ok(Collections.emptyList());
+        }
         // 1.根据地点id查询博客
         Page<Blog> page = query()
                 .eq("poi_id", poiId)
