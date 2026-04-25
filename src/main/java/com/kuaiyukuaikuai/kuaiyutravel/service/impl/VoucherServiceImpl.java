@@ -17,20 +17,21 @@ import java.util.List;
 import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.*;
 
 /**
-* @author 0
-* @description 针对表【tb_voucher】的数据库操作Service实现
-* @createDate 2026-04-17 11:08:15
-*/
+ * 优惠券服务实现类
+ */
 @Service
-public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher>
-    implements VoucherService{
-
+public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher> implements VoucherService {
 
     @Resource
     private SeckillVoucherService seckillVoucherService;
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 查询景点的优惠券
+     * @param poiId 景点ID
+     * @return 优惠券列表
+     */
     @Override
     public Result queryVoucherOfPoi(Long poiId) {
         // 查询优惠券信息
@@ -39,6 +40,10 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher>
         return Result.ok(vouchers);
     }
 
+    /**
+     * 添加秒杀优惠券
+     * @param voucher 优惠券信息
+     */
     @Override
     @Transactional
     public void addSeckillVoucher(Voucher voucher) {
@@ -56,7 +61,3 @@ public class VoucherServiceImpl extends ServiceImpl<VoucherMapper, Voucher>
     }
 
 }
-
-
-
-

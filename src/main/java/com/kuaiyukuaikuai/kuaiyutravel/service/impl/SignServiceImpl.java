@@ -7,16 +7,9 @@ import com.kuaiyukuaikuai.kuaiyutravel.mapper.SignMapper;
 import org.springframework.stereotype.Service;
 
 /**
-* @author 0
-* @description 针对表【tb_sign】的数据库操作Service实现
-* @createDate 2026-04-17 11:08:15
-*/
+ * 签到服务实现类
+ */
 @Service
-public class SignServiceImpl extends ServiceImpl<SignMapper, Sign>
-    implements SignService{
+public class SignServiceImpl extends ServiceImpl<SignMapper, Sign> implements SignService {
 
 }
-
-
-
-

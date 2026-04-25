@@ -5,12 +5,19 @@ import com.kuaiyukuaikuai.kuaiyutravel.entity.Voucher;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
-* @author 0
-* @description 针对表【tb_voucher】的数据库操作Service
-* @createDate 2026-04-17 11:08:15
-*/
+ * 优惠券服务接口
+ */
 public interface VoucherService extends IService<Voucher> {
+    /**
+     * 查询景点的优惠券
+     * @param poiId 景点ID
+     * @return 优惠券列表
+     */
     Result queryVoucherOfPoi(Long poiId);
 
+    /**
+     * 添加秒杀优惠券
+     * @param voucher 优惠券信息
+     */
     void addSeckillVoucher(Voucher voucher);
 }

@@ -5,14 +5,26 @@ import com.kuaiyukuaikuai.kuaiyutravel.entity.VoucherOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
-* @author 0
-* @description 针对表【tb_voucher_order】的数据库操作Service
-* @createDate 2026-04-17 11:08:15
-*/
+ * 优惠券订单服务接口
+ */
 public interface VoucherOrderService extends IService<VoucherOrder> {
+    /**
+     * 秒杀优惠券
+     * @param voucherId 优惠券ID
+     * @return 操作结果
+     */
     Result seckillVoucher(Long voucherId);
 
+    /**
+     * 创建优惠券订单
+     * @param voucherOrder 订单信息
+     */
     void createVoucherOrder(VoucherOrder voucherOrder);
 
+    /**
+     * 普通优惠券
+     * @param voucherId 优惠券ID
+     * @return 操作结果
+     */
     Result commonVoucher(Long voucherId);
 }

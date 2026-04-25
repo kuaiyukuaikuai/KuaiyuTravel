@@ -20,12 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * <p>
- *  服务实现类
- * </p>
- *
- * @author 0
- * @since 2026-04-17
+ * 关注服务实现类
  */
 @Service
 public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implements FollowService {
@@ -34,6 +29,13 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private UserService userService;
+    
+    /**
+     * 关注或取消关注
+     * @param followUserId 被关注用户ID
+     * @param isFollow 是否关注
+     * @return 操作结果
+     */
     @Override
     public Result follow(Long followUserId, Boolean isFollow) {
         UserDTO user = UserHolder.getUser();
@@ -68,8 +70,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     /**
      * 查询是否关注
-     * @param followUserId
-     * @return
+     * @param followUserId 被关注用户ID
+     * @return 关注状态
      */
     @Override
     public Result isFollow(Long followUserId) {
@@ -84,6 +86,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         return Result.ok(count > 0);
     }
 
+    /**
+     * 获取共同关注
+     * @param id 用户ID
+     * @return 共同关注用户列表
+     */
     @Override
     public Result followCommons(Long id) {
         UserDTO user = UserHolder.getUser();

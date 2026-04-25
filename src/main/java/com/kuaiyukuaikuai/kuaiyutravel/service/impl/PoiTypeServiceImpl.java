@@ -15,12 +15,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>
- *  服务实现类
- * </p>
- *
- * @author 0
- * @since 2026-04-17
+ * 景点类型服务实现类
  */
 @Service
 public class PoiTypeServiceImpl extends ServiceImpl<PoiTypeMapper, PoiType> implements PoiTypeService {
@@ -28,6 +23,10 @@ public class PoiTypeServiceImpl extends ServiceImpl<PoiTypeMapper, PoiType> impl
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 查询类型列表
+     * @return 类型列表
+     */
     @Override
     public Result queryTypeList() {
         String key = RedisConstants.CACHE_SHOP_TYPE_KEY;

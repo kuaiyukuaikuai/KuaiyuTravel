@@ -34,17 +34,20 @@ import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.*;
 import static com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 /**
- * @author 0
- * @description 针对表【tb_user】的数据库操作Service实现
- * @createDate 2026-04-17 11:08:15
+ * 用户服务实现类
  */
 @Slf4j
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-        implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 发送验证码
+     * @param phone 手机号
+     * @param session 会话
+     * @return 操作结果
+     */
     @Override
     public Result sendCode(String phone, HttpSession session) {
         // 校验手机号
@@ -60,9 +63,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         // 返回结果
         return Result.ok();
-
     }
 
+    /**
+     * 登录
+     * @param loginForm 登录表单
+     * @param session 会话
+     * @return 登录结果
+     */
     @Override
     public Result login(LoginFormDTO loginForm, HttpSession session) {
         // 1.校验手机号
@@ -107,6 +115,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return Result.ok(token);
     }
 
+    /**
+     * 退出登录
+     * @param token 令牌
+     * @return 操作结果
+     */
     @Override
     public Result logout(String token) {
         // 1. 构建Redis中的token key
@@ -122,6 +135,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return Result.ok();
     }
 
+    /**
+     * 签到
+     * @return 签到结果
+     */
     @Override
     public Result sign() {
         // 1.获取当前登录用户
@@ -129,7 +146,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 2.获取日期
         LocalDateTime now = LocalDateTime.now();
         // 3.拼接key
-        String keySuffix =now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
         String key = USER_SIGN_KEY + userId + keySuffix;
         // 4.获取今天是本月的第几天
         int day = now.getDayOfMonth();
@@ -138,6 +155,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return Result.ok();
     }
 
+    /**
+     * 获取签到次数
+     * @return 签到次数
+     */
     @Override
     public Result signCount() {
         // 1.获取当前登录用户
@@ -145,7 +166,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 2.获取日期
         LocalDateTime now = LocalDateTime.now();
         // 3.拼接key
-        String keySuffix =now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
         String key = USER_SIGN_KEY + userId + keySuffix;
         // 4.获取今天是本月的第几天
         int day = now.getDayOfMonth();
@@ -160,7 +181,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return Result.ok(0);
         }
         Long num = result.get(0);
-        if (num == null || num == 0){
+        if (num == null || num == 0) {
             return Result.ok(0);
         }
         // 6.循环遍历
@@ -177,9 +198,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             num = num >> 1;
         }
         return Result.ok(count);
-
     }
 
+    /**
+     * 更新用户信息
+     * @param updateDTO 更新信息
+     * @return 操作结果
+     */
     @Override
     public Result updateUserInfo(UserUpdateDTO updateDTO) {
         // 1. 从当前线程(Token)中获取当前登录用户的 ID
@@ -197,6 +222,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return Result.ok();
     }
 
+    /**
+     * 更新密码
+     * @param passwordDTO 密码信息
+     * @return 操作结果
+     */
     @Override
     public Result updatePassword(UserPasswordDTO passwordDTO) {
         Long userId = UserHolder.getUser().getId();
@@ -251,14 +281,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         updateById(updateUser);
 
-//         6. (可选) 清理 Redis 中的 Token，强制踢下线重新登录
-         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-         String token = request.getHeader("authorization");
-         stringRedisTemplate.delete("login:token:" + token);
+        // 6. (可选) 清理 Redis 中的 Token，强制踢下线重新登录
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String token = request.getHeader("authorization");
+        stringRedisTemplate.delete("login:token:" + token);
 
         return Result.ok();
     }
 
+    /**
+     * 密码登录
+     * @param loginForm 登录表单
+     * @return 登录结果
+     */
     @Override
     public Result loginByPassword(LoginFormDTO loginForm) {
         // 1. 获取前端传来的账号(这里以手机号 phone 为例)和密码
@@ -308,6 +343,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return Result.ok(token);
     }
 
+    /**
+     * 根据手机号创建用户
+     * @param phone 手机号
+     * @return 用户信息
+     */
     private User createUserWithPhone(String phone) {
         User user = new User();
         user.setPhone(phone);
@@ -317,7 +357,3 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
 }
-
-
-
-

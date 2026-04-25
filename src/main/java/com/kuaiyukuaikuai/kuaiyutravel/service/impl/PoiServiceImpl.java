@@ -37,12 +37,7 @@ import java.util.concurrent.TimeUnit;
 import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.*;
 
 /**
- * <p>
- * 服务实现类
- * </p>
- *
- * @author 0
- * @since 2026-04-17
+ * 景点服务实现类
  */
 @Slf4j
 @Service
@@ -55,6 +50,11 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
     @Resource
     private RedissonClient redissonClient;
 
+    /**
+     * 根据ID查询景点
+     * @param id 景点ID
+     * @return 景点详情
+     */
     @Override
     public Result queryPoiById(Long id) {
         // 解决缓存穿透
@@ -95,6 +95,11 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
 
     }
 
+    /**
+     * 更新景点信息
+     * @param poi 景点信息
+     * @return 操作结果
+     */
     @Override
     @Transactional
     public Result update(Poi poi) {
@@ -109,6 +114,14 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         return Result.ok();
     }
 
+    /**
+     * 根据类型查询景点
+     * @param typeId 类型ID
+     * @param current 当前页码
+     * @param x 经度
+     * @param y 纬度
+     * @return 景点列表
+     */
     @Override
     public Result queryPoiByType(Integer typeId, Integer current, Double x, Double y) {
         // 1.判断是否需要根据坐标查询
@@ -167,6 +180,10 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         return Result.ok(pois);
     }
 
+    /**
+     * 使用布隆过滤器保存景点
+     * @param poi 景点信息
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void savePoiWithBloomFilter(Poi poi) {

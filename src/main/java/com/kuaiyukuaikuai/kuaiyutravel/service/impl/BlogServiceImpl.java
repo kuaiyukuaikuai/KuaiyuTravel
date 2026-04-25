@@ -29,12 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * <p>
- * 服务实现类
- * </p>
- *
- * @author 0
- * @since 2026-04-17
+ * 博客服务实现类
  */
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -48,9 +43,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
     /**
      * 查询热门博客
-     *
-     * @param current
-     * @return
+     * @param current 当前页码
+     * @return 热门博客列表
      */
     @Override
     public Result queryHotBlog(Integer current) {
@@ -69,10 +63,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     }
 
     /**
-     * 查询博客
-     *
-     * @param id
-     * @return
+     * 根据ID查询博客
+     * @param id 博客ID
+     * @return 博客详情
      */
     @Override
     public Result queryBlogById(Long id) {
@@ -88,6 +81,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         return Result.ok(blog);
     }
 
+    /**
+     * 判断博客是否被点赞
+     * @param blog 博客信息
+     */
     private void isBlogLiked(Blog blog) {
         // 获取用户
         UserDTO user = UserHolder.getUser();
@@ -102,6 +99,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         blog.setIsLike(score != null);
     }
 
+    /**
+     * 查询博客用户信息
+     * @param blog 博客信息
+     */
     private void queryBlogUser(Blog blog) {
         Long userId = blog.getUserId();
         User user = userService.getById(userId);
@@ -109,6 +110,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         blog.setName(user.getNickName());
     }
 
+    /**
+     * 点赞博客
+     * @param id 博客ID
+     * @return 操作结果
+     */
     @Override
     public Result likeBlog(Long id) {
         // 1.获取用户
@@ -141,19 +147,24 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         return Result.ok();
     }
 
+    /**
+     * 查询博客点赞用户
+     * @param id 博客ID
+     * @return 点赞用户列表
+     */
     @Override
     public Result queryBlogLikes(Long id) {
         // 1. 查询top5的点赞用户
         String key = "blog:liked:" + id;
         Set<String> top5 = stringRedisTemplate.opsForZSet().range(key, 0, 4);
         // 1.1 判断用户是否为空
-        if (top5 == null || top5.isEmpty()) { //isEmpty()空集合返回true null表示空指针,Redis key 不存在，返回 null
-            return Result.ok(Collections.emptyList());// 返回一个空的集合
+        if (top5 == null || top5.isEmpty()) {
+            return Result.ok(Collections.emptyList());
         }
         // 2.解析出其中的用户id
-        List<Long> ids = top5.stream() // 将 Set<String> 转为流
-                .map(Long::valueOf) // 每个 String 通过 Long.valueOf() 转为 Long,map()用于将流中的每个元素转换为另一种形式。
-                .collect(Collectors.toList()); // 收集为 List<Long>
+        List<Long> ids = top5.stream()
+                .map(Long::valueOf)
+                .collect(Collectors.toList());
         String idStr = StrUtil.join(",", ids);
 
         // 3.根据用户id查询用户
@@ -163,11 +174,15 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
                 .collect(Collectors.toList());
 
-
         // 4.返回
         return Result.ok(userDTOS);
     }
 
+    /**
+     * 保存博客
+     * @param blog 博客信息
+     * @return 保存结果
+     */
     @Override
     public Result saveBlog(Blog blog) {
         // 获取登录用户
@@ -193,6 +208,12 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         return Result.ok(blog.getId());
     }
 
+    /**
+     * 查询关注用户的博客
+     * @param max 最大ID
+     * @param offset 偏移量
+     * @return 博客列表
+     */
     @Override
     public Result queryBlogOfFollow(Long max, Integer offset) {
         // 1.获取当前用户

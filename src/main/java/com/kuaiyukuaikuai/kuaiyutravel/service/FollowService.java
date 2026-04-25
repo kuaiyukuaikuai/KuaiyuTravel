@@ -5,15 +5,29 @@ import com.kuaiyukuaikuai.kuaiyutravel.entity.Follow;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
-* @author 0
-* @description 针对表【tb_follow】的数据库操作Service
-* @createDate 2026-04-17 11:08:15
-*/
+ * 关注服务接口
+ */
 public interface FollowService extends IService<Follow> {
 
+    /**
+     * 关注或取消关注
+     * @param followUserId 被关注用户ID
+     * @param isFollow 是否关注
+     * @return 操作结果
+     */
     Result follow(Long followUserId, Boolean isFollow);
 
+    /**
+     * 查询是否关注
+     * @param followUserId 被关注用户ID
+     * @return 关注状态
+     */
     Result isFollow(Long followUserId);
 
+    /**
+     * 获取共同关注
+     * @param id 用户ID
+     * @return 共同关注用户列表
+     */
     Result followCommons(Long id);
 }
