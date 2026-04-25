@@ -136,4 +136,17 @@ public class BlogController {
         return blogService.queryBlogOfFollow(max, offset);
     }
 
+    /**
+     * 根据地点id查询博客
+     *
+     * @param poiId 地点id
+     * @param current 当前页码
+     * @return 博客列表
+     */
+    @GetMapping("/of/poi")
+    public Result queryBlogByPoiId(
+            @RequestParam(value = "current", defaultValue = "1") Integer current,
+            @RequestParam("poiId") Long poiId) {
+        return blogService.queryBlogByPoiId(current, poiId);
+    }
 }

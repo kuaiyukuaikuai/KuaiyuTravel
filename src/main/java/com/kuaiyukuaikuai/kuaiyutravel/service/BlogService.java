@@ -51,4 +51,12 @@ public interface BlogService extends IService<Blog> {
      * @return 博客列表
      */
     Result queryBlogOfFollow(Long max, Integer offset);
+
+    /**
+     * 根据地点id查询博客
+     * @param poiId 地点id
+     * @param current 当前页码
+     * @return 博客列表
+     */
+    Result queryBlogByPoiId(Integer current, Long poiId);
 }

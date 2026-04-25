@@ -264,4 +264,22 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         scrollResult.setMinTime(minTime);
         return Result.ok(scrollResult);
     }
+
+    /**
+     * 根据地点id查询博客
+     * @param poiId 地点id
+     * @param current 当前页码
+     * @return 博客列表
+     */
+    @Override
+    public Result queryBlogByPoiId(Integer current, Long poiId) {
+        // 1.根据地点id查询博客
+        Page<Blog> page = query()
+                .eq("poi_id", poiId)
+                .orderByDesc("id")
+                .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
+        List<Blog> blogs = page.getRecords();
+        // 2.封装并返回
+        return Result.ok(blogs);
+    }
 }
