@@ -4,6 +4,8 @@ import com.kuaiyukuaikuai.kuaiyutravel.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * 景点服务接口
  */
@@ -38,4 +40,10 @@ public interface PoiService extends IService<Poi> {
      * @param poi 景点信息
      */
     void savePoiWithBloomFilter(Poi poi);
+
+    /**
+     * 批量保存景点并同步到布隆过滤器
+     * @param poiList 景点列表
+     */
+    void savePoiBatchWithBloomFilter(List<Poi> poiList);
 }

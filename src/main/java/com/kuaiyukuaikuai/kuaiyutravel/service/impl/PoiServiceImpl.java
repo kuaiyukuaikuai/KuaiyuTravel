@@ -200,5 +200,79 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
             log.error("同步布隆过滤器失败，数据库操作将回滚，POI ID: {}", poi.getId(), e);
             throw new RuntimeException("系统繁忙，保存失败");
         }
+
+        // 3. 追加 Redis GEO 存储逻辑
+        try {
+            if (poi.getX() != null && poi.getY() != null) {
+                String geoKey = "poi:geo:" + poi.getTypeId();
+                stringRedisTemplate.opsForGeo().add(geoKey, new org.springframework.data.geo.Point(poi.getX(), poi.getY()), poi.getId().toString());
+                log.info("POI 经纬度已同步至 Redis GEO，ID: {}, 类型: {}", poi.getId(), poi.getTypeId());
+            }
+        } catch (Exception e) {
+            // 如果 GEO 存储失败，抛出运行时异常，强制触发回滚
+            log.error("同步 Redis GEO 失败，数据库操作将回滚，POI ID: {}", poi.getId(), e);
+            throw new RuntimeException("系统繁忙，保存失败");
+        }
+    }
+
+    /**
+     * 批量保存景点并同步到布隆过滤器
+     * @param poiList 景点列表
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void savePoiBatchWithBloomFilter(List<Poi> poiList) {
+        // 1. 先批量写入数据库
+        if (poiList == null || poiList.isEmpty()) {
+            log.warn("批量保存景点列表为空");
+            return;
+        }
+
+        this.saveBatch(poiList);
+        log.info("批量保存 POI 成功，共 {} 条记录", poiList.size());
+
+        // 2. 数据库写入成功，拿到自增的 ID，批量同步到布隆过滤器
+        try {
+            RBloomFilter<Long> bloomFilter = redissonClient.getBloomFilter("poi:bloom-filter");
+            
+            // 按类型分组处理 Redis GEO
+            Map<Long, List<Poi>> poiMapByType = poiList.stream()
+                    .filter(poi -> poi.getX() != null && poi.getY() != null)
+                    .collect(java.util.stream.Collectors.groupingBy(Poi::getTypeId));
+            
+            // 遍历分组后的 Map，批量写入 Redis GEO
+            for (Map.Entry<Long, List<Poi>> entry : poiMapByType.entrySet()) {
+                Long typeId = entry.getKey();
+                List<Poi> pois = entry.getValue();
+                
+                // 拼接 Redis GEO Key
+                String geoKey = "poi:geo:" + typeId;
+                
+                // 创建 GeoLocation 集合
+                List<org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation<String>> locations = pois.stream()
+                        .map(poi -> {
+                            org.springframework.data.geo.Point point = new org.springframework.data.geo.Point(poi.getX(), poi.getY());
+                            return new org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation<>(poi.getId().toString(), point);
+                        })
+                        .collect(java.util.stream.Collectors.toList());
+                
+                // 批量插入到 Redis GEO
+                if (!locations.isEmpty()) {
+                    stringRedisTemplate.opsForGeo().add(geoKey, locations);
+                    log.info("成功将 {} 条类型为 {} 的数据同步到 Redis GEO", locations.size(), typeId);
+                }
+            }
+            
+            // 同步到布隆过滤器
+            for (Poi poi : poiList) {
+                bloomFilter.add(poi.getId());
+            }
+            
+            log.info("批量 POI 已同步至布隆过滤器和 Redis GEO，共 {} 条记录", poiList.size());
+        } catch (Exception e) {
+            // 如果 Redis 操作失败，抛出运行时异常，强制触发回滚
+            log.error("同步布隆过滤器或 Redis GEO 失败，数据库操作将回滚", e);
+            throw new RuntimeException("系统繁忙，批量保存失败");
+        }
     }
 }
