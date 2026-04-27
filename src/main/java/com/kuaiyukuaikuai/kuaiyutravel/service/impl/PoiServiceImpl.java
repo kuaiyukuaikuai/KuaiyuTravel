@@ -59,10 +59,10 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
     public Result queryPoiById(Long id) {
         // 解决缓存穿透
         //        Poi poi = cacheClient
-        //                .queryWithPassThrough(CACHE_SHOP_KEY, id, Poi.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+        //                .queryWithPassThrough(CACHE_POI_KEY, id, Poi.class, this::getById, CACHE_POI_TTL, TimeUnit.MINUTES);
         // 逻辑过期解决缓存击穿
         //         Poi poi = cacheClient
-        //                .queryWithLogicalExpire(CACHE_SHOP_KEY, id, Poi.class, this::getById, 20L, TimeUnit.SECONDS);
+        //                .queryWithLogicalExpire(CACHE_POI_KEY, id, Poi.class, this::getById, 20L, TimeUnit.SECONDS);
 
         // ================== 1. 布隆过滤器前置拦截 ==================
         // 获取布隆过滤器
@@ -82,7 +82,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
 
         // 互斥锁解决缓存击穿
         Poi poi = cacheClient
-                .queryWithMutex(CACHE_SHOP_KEY, id, Poi.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+                .queryWithMutex(CACHE_POI_KEY, id, Poi.class, this::getById, CACHE_POI_TTL, TimeUnit.MINUTES);
 
         // 应对布隆过滤器的极小概率“误判”：如果真的误判放过来了，最后查出来还是 null，这里做最终兜底
         if (poi == null) {
@@ -110,7 +110,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         // 1.更新数据库
         updateById(poi);
         // 2.删除缓存
-        stringRedisTemplate.delete(CACHE_SHOP_KEY + id);
+        stringRedisTemplate.delete(CACHE_POI_KEY + id);
         return Result.ok();
     }
 
@@ -141,7 +141,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
         int from = (current - 1) * SystemConstants.DEFAULT_PAGE_SIZE;
         int end = current * SystemConstants.DEFAULT_PAGE_SIZE;
         // 3.查询redis,按照距离排序,分页,结果:poiId, distance
-        String key = SHOP_GEO_KEY + typeId;//typeId是店铺类型
+        String key = POI_GEO_KEY + typeId;//typeId是店铺类型
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo().search(
                 key,
                 GeoReference.fromCoordinate(x, y),// 坐标
@@ -193,7 +193,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
 
         // 2. 数据库写入成功，拿到自增的 ID，写入布隆过滤器
         try {
-            redissonClient.getBloomFilter("poi:bloom-filter").add(poi.getId());
+            redissonClient.getBloomFilter(POI_BLOOM_FILTER).add(poi.getId());
             log.info("POI 添加成功，已同步至布隆过滤器，ID: {}", poi.getId());
         } catch (Exception e) {
             // 如果 Redis 添加失败，抛出运行时异常，强制触发上面的 @Transactional 回滚数据库
@@ -233,7 +233,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
 
         // 2. 数据库写入成功，拿到自增的 ID，批量同步到布隆过滤器
         try {
-            RBloomFilter<Long> bloomFilter = redissonClient.getBloomFilter("poi:bloom-filter");
+            RBloomFilter<Long> bloomFilter = redissonClient.getBloomFilter(POI_BLOOM_FILTER);
             
             // 按类型分组处理 Redis GEO
             Map<Long, List<Poi>> poiMapByType = poiList.stream()
@@ -246,7 +246,7 @@ public class PoiServiceImpl extends ServiceImpl<PoiMapper, Poi> implements PoiSe
                 List<Poi> pois = entry.getValue();
                 
                 // 拼接 Redis GEO Key
-                String geoKey = "poi:geo:" + typeId;
+                String geoKey = POI_GEO_KEY + typeId;
                 
                 // 创建 GeoLocation 集合
                 List<org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation<String>> locations = pois.stream()

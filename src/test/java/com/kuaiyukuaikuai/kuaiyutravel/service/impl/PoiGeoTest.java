@@ -34,7 +34,7 @@ public class PoiGeoTest {
             Long id = poi.getId();
             
             // 构建 Redis key: poi:geo:{typeId}
-            String key = RedisConstants.SHOP_GEO_KEY + typeId;
+            String key = RedisConstants.POI_GEO_KEY + typeId;
             
             // 将地点的地理位置存入 Redis
             stringRedisTemplate.opsForGeo().add(

@@ -284,7 +284,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 6. (可选) 清理 Redis 中的 Token，强制踢下线重新登录
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String token = request.getHeader("authorization");
-        stringRedisTemplate.delete("login:token:" + token);
+        stringRedisTemplate.delete(LOGIN_USER_KEY + token);
 
         return Result.ok();
     }

@@ -29,7 +29,7 @@ public class PoiTypeServiceImpl extends ServiceImpl<PoiTypeMapper, PoiType> impl
      */
     @Override
     public Result queryTypeList() {
-        String key = RedisConstants.CACHE_SHOP_TYPE_KEY;
+        String key = RedisConstants.CACHE_POI_TYPE_KEY;
         // 1. 从 Redis 查询地点类型列表
         String typeJson = stringRedisTemplate.opsForValue().get(key);
         // 2. 判断是否存在
@@ -46,7 +46,7 @@ public class PoiTypeServiceImpl extends ServiceImpl<PoiTypeMapper, PoiType> impl
         }
 
         // 5. 存在，写入 Redis 并设置过期时间
-        stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(typeList), RedisConstants.CACHE_SHOP_TYPE_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(typeList), RedisConstants.CACHE_POI_TYPE_TTL, TimeUnit.MINUTES);
         return Result.ok(typeList);
     }
 }

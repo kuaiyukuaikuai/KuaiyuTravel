@@ -8,18 +8,19 @@ public class RedisConstants {
 
     public static final Long CACHE_NULL_TTL = 2L;
 
-    public static final Long CACHE_SHOP_TTL = 30L;
-    public static final String CACHE_SHOP_KEY = "cache:poi:";
+    public static final Long CACHE_POI_TTL = 30L;
+    public static final String CACHE_POI_KEY = "cache:poi:";
 
-    public static final String CACHE_SHOP_TYPE_KEY = "cache:poi:type";
-    public static final Long CACHE_SHOP_TYPE_TTL = 30L;
+    public static final String CACHE_POI_TYPE_KEY = "cache:poi:type";
+    public static final Long CACHE_POI_TYPE_TTL = 30L;
 
-    public static final String LOCK_SHOP_KEY = "lock:poi:";
-    public static final Long LOCK_SHOP_TTL = 10L;
+    public static final String LOCK_POI_KEY = "lock:poi:";
+    public static final Long LOCK_POI_TTL = 10L;
 
     public static final String SECKILL_STOCK_KEY = "seckill:stock:";
     public static final String BLOG_LIKED_KEY = "blog:liked:";
     public static final String FEED_KEY = "feed:";
-    public static final String SHOP_GEO_KEY = "poi:geo:";
+    public static final String POI_GEO_KEY = "poi:geo:";
     public static final String USER_SIGN_KEY = "sign:";
+    public static final String POI_BLOOM_FILTER = "poi:bloom-filter";
 }
