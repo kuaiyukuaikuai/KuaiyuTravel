@@ -2,6 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.service;
 
 import com.kuaiyukuaikuai.kuaiyutravel.dto.LoginFormDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.UserPasswordDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.UserUpdateDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
@@ -68,4 +69,11 @@ public interface UserService extends IService<User> {
      * @return 登录结果
      */
     Result loginByPassword(LoginFormDTO loginForm);
+
+    /**
+     * 根据ID获取用户DTO
+     * @param userId 用户ID
+     * @return 用户DTO
+     */
+    UserDTO getUserDTOById(Long userId);
 }

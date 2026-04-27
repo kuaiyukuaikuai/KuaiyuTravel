@@ -356,4 +356,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user;
     }
 
+    /**
+     * 根据ID获取用户DTO
+     * @param userId 用户ID
+     * @return 用户DTO
+     */
+    @Override
+    public UserDTO getUserDTOById(Long userId) {
+        User user = getBaseMapper().selectById(userId);
+        if (user == null) {
+            return null;
+        }
+        return BeanUtil.copyProperties(user, UserDTO.class);
+    }
+
 }
