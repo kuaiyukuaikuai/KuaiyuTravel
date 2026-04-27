@@ -58,6 +58,9 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
         if (blogComments.getParentId() == null) {
             blogComments.setParentId(0L);
         }
+        if (blogComments.getAnswerId() == null) {
+            blogComments.setAnswerId(0L);
+        }
 
         // 4. 保存评论
         boolean success = save(blogComments);
