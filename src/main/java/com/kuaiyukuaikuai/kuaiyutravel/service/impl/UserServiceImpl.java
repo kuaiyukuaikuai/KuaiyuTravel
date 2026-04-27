@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.*;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Sign;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
+import com.kuaiyukuaikuai.kuaiyutravel.entity.UserInfo;
 import com.kuaiyukuaikuai.kuaiyutravel.service.SignService;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
@@ -233,6 +234,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 操作结果
      */
     @Override
+    @Transactional
     public Result updateUserInfo(UserUpdateDTO updateDTO) {
         // 1. 从当前线程(Token)中获取当前登录用户的 ID
         Long userId = UserHolder.getUser().getId();
@@ -245,6 +247,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 3. 调用 MyBatis-Plus 的更新方法 (只会更新非 null 的字段)
         updateById(user);
+
+        // 4. 调用 UserInfoService 的方法更新详情信息
+        userInfoService.updateDetailInfo(userId, updateDTO);
+
+        // 5. 同步更新 Redis 中的用户信息缓存
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String token = request.getHeader("authorization");
+        if (cn.hutool.core.util.StrUtil.isNotBlank(token)) {
+            String tokenKey = LOGIN_USER_KEY + token;
+            stringRedisTemplate.opsForHash().put(tokenKey, "nickName", updateDTO.getNickName());
+            if (cn.hutool.core.util.StrUtil.isNotBlank(updateDTO.getIcon())) {
+                stringRedisTemplate.opsForHash().put(tokenKey, "icon", updateDTO.getIcon());
+            }
+        }
 
         return Result.ok();
     }
