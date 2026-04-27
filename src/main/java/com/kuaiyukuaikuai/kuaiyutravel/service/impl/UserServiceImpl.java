@@ -8,7 +8,10 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.*;
+import com.kuaiyukuaikuai.kuaiyutravel.entity.Sign;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.User;
+import com.kuaiyukuaikuai.kuaiyutravel.service.SignService;
+import com.kuaiyukuaikuai.kuaiyutravel.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
 import com.kuaiyukuaikuai.kuaiyutravel.mapper.UserMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.RegexUtils;
@@ -20,9 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -41,6 +46,12 @@ import static com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants.USER_NICK_NA
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    
+    @Resource
+    private UserInfoService userInfoService;
+    
+    @Resource
+    private SignService signService;
 
     /**
      * 发送验证码
@@ -140,18 +151,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 签到结果
      */
     @Override
+    @Transactional
     public Result sign() {
         // 1.获取当前登录用户
         Long userId = UserHolder.getUser().getId();
-        // 2.获取日期
+        // 2.获取当前日期
+        LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
-        // 3.拼接key
+        
+        // 3.防重校验：检查用户今天是否已经签到
+        if (signService.hasSigned(userId, today)) {
+            return Result.fail("今天已经签到过了");
+        }
+        
+        // 4.存入MySQL：构建Sign实体类并保存
+        Sign sign = new Sign();
+        sign.setUserId(userId);
+        sign.setYear(today.getYear());
+        sign.setMonth(today.getMonthValue());
+        sign.setDate(today);
+        sign.setIsBackup(0);
+        signService.save(sign);
+        
+        // 5.存入Redis：保持原有的Redis BitMap写入逻辑
         String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
         String key = USER_SIGN_KEY + userId + keySuffix;
-        // 4.获取今天是本月的第几天
         int day = now.getDayOfMonth();
-        // 5.写入Redis SETBIT key offset 1
         stringRedisTemplate.opsForValue().setBit(key, day - 1, true);
+        
         return Result.ok();
     }
 
