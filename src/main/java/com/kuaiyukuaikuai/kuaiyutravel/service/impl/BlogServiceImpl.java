@@ -312,4 +312,48 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // 2.封装并返回
         return Result.ok(blogs);
     }
+
+
+    /**
+     * 检查是否有新动态（红点）
+     */
+    @Override
+    public Result checkRedDot() {
+        // 1. 获取当前登录用户
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
+
+        // 2. 获取该用户最后一次阅读动态的时间
+        String timeStr = stringRedisTemplate.opsForValue().get("feed:read_time:" + userId);
+        // 如果 Redis 里没有记录，说明这是新用户或者从来没点开过，默认时间给 0
+        long lastReadTime = StrUtil.isBlank(timeStr) ? 0L : Long.parseLong(timeStr);
+
+        // 3. 统计 ZSet 收件箱中，时间戳大于 lastReadTime 的动态数量
+        // lastReadTime + 1 相当于开区间 (lastReadTime, +∞)
+        Long unreadCount = stringRedisTemplate.opsForZSet().count("feed:" + userId, lastReadTime + 1, Double.MAX_VALUE);
+
+        // 4. 如果数量大于 0，说明有新动态，返回 true 给前端显示红点
+        return Result.ok(unreadCount != null && unreadCount > 0);
+    }
+
+    /**
+     * 清除新动态红点（更新最后阅读时间）
+     */
+    @Override
+    public Result clearRedDot() {
+        // 1. 获取当前登录用户
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("用户未登录");
+        }
+        Long userId = user.getId();
+
+        // 2. 将最后阅读时间更新为当前的最新时间戳
+        stringRedisTemplate.opsForValue().set("feed:read_time:" + userId, String.valueOf(System.currentTimeMillis()));
+
+        return Result.ok();
+    }
 }

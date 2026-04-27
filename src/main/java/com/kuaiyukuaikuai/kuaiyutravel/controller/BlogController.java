@@ -149,4 +149,22 @@ public class BlogController {
             @RequestParam("poiId") Long poiId) {
         return blogService.queryBlogByPoiId(current, poiId);
     }
+
+    /**
+     * 检查是否有新动态（红点）
+     * * @return true表示有红点，false表示没有
+     */
+    @GetMapping("/feed/red-dot")
+    public Result checkRedDot() {
+        return blogService.checkRedDot();
+    }
+
+    /**
+     * 清除新动态红点（更新最后阅读时间）
+     * * @return 操作结果
+     */
+    @PutMapping("/feed/read")
+    public Result clearRedDot() {
+        return blogService.clearRedDot();
+    }
 }

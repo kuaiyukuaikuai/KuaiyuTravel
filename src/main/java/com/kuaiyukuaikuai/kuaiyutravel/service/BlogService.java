@@ -59,4 +59,14 @@ public interface BlogService extends IService<Blog> {
      * @return 博客列表
      */
     Result queryBlogByPoiId(Integer current, Long poiId);
+
+    /**
+     * 检查是否有新动态（红点）
+     */
+    Result checkRedDot();
+
+    /**
+     * 清除新动态红点（更新最后阅读时间）
+     */
+    Result clearRedDot();
 }
