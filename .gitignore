@@ -33,3 +33,7 @@ build/
 .vscode/
 src/main/resources/application.yml
 src/main/resources/application-local.yml
+
+# 忽略 JVM 崩溃日志
+hs_err_pid*.log
+*.log
