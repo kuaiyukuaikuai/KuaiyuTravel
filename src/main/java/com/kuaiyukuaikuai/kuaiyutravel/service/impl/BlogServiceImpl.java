@@ -17,9 +17,14 @@ import com.kuaiyukuaikuai.kuaiyutravel.service.FollowService;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+import com.kuaiyukuaikuai.kuaiyutravel.config.RabbitMQConfig;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.annotation.Resource;
 
@@ -41,6 +46,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private FollowService followService;
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     /**
      * 查询热门博客
@@ -186,33 +193,40 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     }
 
     /**
-     * 保存博客
+     * 保存博客 (RabbitMQ 异步推流版)
      *
      * @param blog 博客信息
      * @return 保存结果
      */
     @Override
     public Result saveBlog(Blog blog) {
-        // 获取登录用户
+        // 1. 获取登录用户
         UserDTO user = UserHolder.getUser();
         if (user == null) {
             return Result.fail("用户未登录");
         }
         blog.setUserId(user.getId());
-        // 保存探店博文
+
+        // 2. 保存探店博文到数据库
         boolean isSuccess = save(blog);
         if (!isSuccess) {
             return Result.fail("新增笔记失败");
         }
-        // 查询笔记作者的粉丝
-        List<Follow> follows = followService.query().eq("follow_user_id", user.getId()).list();
-        // 推送笔记
-        for (Follow follow : follows) {
-            String key = "feed:" + follow.getUserId();
-            stringRedisTemplate.opsForZSet().add(key, blog.getId().toString(), System.currentTimeMillis());
-        }
 
-        // 返回id
+        // 3. 异步推送笔记给粉丝 (核心改造)
+        // 封装要发送的消息体（博主ID和刚刚保存的博客ID）
+        Map<String, Object> message = new HashMap<>();
+        message.put("userId", user.getId());
+        message.put("blogId", blog.getId());
+
+        // 将任务丢给 RabbitMQ 的博客交换机
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BLOG_EXCHANGE,
+                RabbitMQConfig.BLOG_ROUTING_KEY,
+                message
+        );
+
+        // 4. 立刻返回id给前端
         return Result.ok(blog.getId());
     }
 
