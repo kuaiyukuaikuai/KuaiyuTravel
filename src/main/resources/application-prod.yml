@@ -1,25 +1,25 @@
 spring:
   datasource:
-    # 👇 换回不会发生路由冲突的阿里云内网 IP
+    # 生产环境使用内网 IP 进行连接，提高安全性和传输速度
     url: jdbc:mysql://172.17.62.67:3306/kuaiyu_travel?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    #  PROD_DB_PWD
     password: ${PROD_DB_PWD}
   data:
     redis:
-      # 👇 换回内网 IP
       host: 172.17.62.67
-      # 同样用变量名代替真实密码
       password: ${PROD_REDIS_PWD}
   rabbitmq:
-    # 公网 IP
     host: 39.108.95.154
     port: 5672
-    # 替换为环境变量
     username: ${PROD_MQ_USER}
     password: ${PROD_MQ_PWD}
 
+  # 生产环境 AI 密钥从服务器环境变量读取 TODO 配置虚拟机环境
+  ai:
+    openai:
+      api-key: ${PROD_AI_API_KEY}
+
 aliyun:
   oss:
-    # 阿里云的密钥也用变量名代替
+    # 生产环境 OSS 密钥从服务器环境变量读取
     access-key-id: ${ALIYUN_AK}
     access-key-secret: ${ALIYUN_SK}

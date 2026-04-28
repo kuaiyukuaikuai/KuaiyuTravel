@@ -6,14 +6,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Follow;
+import com.kuaiyukuaikuai.kuaiyutravel.entity.UserInfo;
 import com.kuaiyukuaikuai.kuaiyutravel.mapper.FollowMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.service.FollowService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kuaiyukuaikuai.kuaiyutravel.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
 import java.util.Collections;
@@ -31,6 +34,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private UserService userService;
+    @Resource
+    private UserInfoService userInfoService;
     
     /**
      * 关注或取消关注
@@ -39,6 +44,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
      * @return 操作结果
      */
     @Override
+    @Transactional
     public Result follow(Long followUserId, Boolean isFollow) {
         UserDTO user = UserHolder.getUser();
         if (user == null) {
@@ -56,6 +62,11 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             if (isSuccess) {
                 // 把关注用户id保存到redis的set集合 sadd userId followUserId
                 stringRedisTemplate.opsForSet().add("follows:" + userId, followUserId.toString());
+                // 更新关注数和粉丝数
+                checkAndInitUserInfo(userId);
+                checkAndInitUserInfo(followUserId);
+                userInfoService.update().setSql("followee = followee + 1").eq("user_id", userId).update();
+                userInfoService.update().setSql("fans = fans + 1").eq("user_id", followUserId).update();
             }
         } else {
             // 3.取关，删除数据
@@ -65,9 +76,29 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             // 把关注用户id从redis的set集合移除
             if (isSuccess) {
                 stringRedisTemplate.opsForSet().remove("follows:" + userId, followUserId.toString());
+                // 更新关注数和粉丝数（防止负数）
+                checkAndInitUserInfo(userId);
+                checkAndInitUserInfo(followUserId);
+                userInfoService.update().setSql("followee = followee - 1").eq("user_id", userId).gt("followee", 0).update();
+                userInfoService.update().setSql("fans = fans - 1").eq("user_id", followUserId).gt("fans", 0).update();
             }
         }
         return Result.ok();
+    }
+
+    /**
+     * 检查并初始化用户信息记录
+     * @param id 用户ID
+     */
+    private void checkAndInitUserInfo(Long id) {
+        UserInfo userInfo = userInfoService.getById(id);
+        if (userInfo == null) {
+            userInfo = new UserInfo();
+            userInfo.setUserId(id);
+            userInfo.setFans(0);
+            userInfo.setFollowee(0);
+            userInfoService.save(userInfo);
+        }
     }
 
     /**
