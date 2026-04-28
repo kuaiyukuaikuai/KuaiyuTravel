@@ -2,6 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.entity.Follow;
@@ -9,6 +10,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.mapper.FollowMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.service.FollowService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
+import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -110,5 +112,53 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 .map(u -> BeanUtil.copyProperties(u,UserDTO.class))
                 .collect(Collectors.toList());
         return Result.ok(users);
+    }
+
+    /**
+     * 查询粉丝列表
+     * @param id 用户ID
+     * @param current 当前页码
+     * @return 粉丝列表
+     */
+    @Override
+    public Result queryFans(Long id, Integer current) {
+        Page<Follow> page = query()
+                .eq("follow_user_id", id)
+                .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+        
+        List<Follow> records = page.getRecords();
+        if (records == null || records.isEmpty()) {
+            return Result.ok(Collections.emptyList());
+        }
+        
+        List<UserDTO> userDTOList = records.stream()
+                .map(follow -> userService.getUserDTOById(follow.getUserId()))
+                .collect(Collectors.toList());
+        
+        return Result.ok(userDTOList);
+    }
+
+    /**
+     * 查询关注列表
+     * @param id 用户ID
+     * @param current 当前页码
+     * @return 关注列表
+     */
+    @Override
+    public Result queryFollowings(Long id, Integer current) {
+        Page<Follow> page = query()
+                .eq("user_id", id)
+                .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+        
+        List<Follow> records = page.getRecords();
+        if (records == null || records.isEmpty()) {
+            return Result.ok(Collections.emptyList());
+        }
+        
+        List<UserDTO> userDTOList = records.stream()
+                .map(follow -> userService.getUserDTOById(follow.getFollowUserId()))
+                .collect(Collectors.toList());
+        
+        return Result.ok(userDTOList);
     }
 }

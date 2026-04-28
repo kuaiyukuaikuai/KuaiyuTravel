@@ -53,4 +53,30 @@ public class FollowController {
     public Result followCommons(@PathVariable("id") Long id) {
         return followService.followCommons(id);
     }
+
+    /**
+     * 查询粉丝列表
+     * 
+     * @param id 用户id
+     * @param current 当前页码
+     * @return 粉丝列表
+     */
+    @GetMapping("/fans/{id}")
+    public Result queryFans(@PathVariable("id") Long id,
+                           @RequestParam(value = "current", defaultValue = "1") Integer current) {
+        return followService.queryFans(id, current);
+    }
+
+    /**
+     * 查询关注列表
+     * 
+     * @param id 用户id
+     * @param current 当前页码
+     * @return 关注列表
+     */
+    @GetMapping("/followings/{id}")
+    public Result queryFollowings(@PathVariable("id") Long id,
+                                  @RequestParam(value = "current", defaultValue = "1") Integer current) {
+        return followService.queryFollowings(id, current);
+    }
 }

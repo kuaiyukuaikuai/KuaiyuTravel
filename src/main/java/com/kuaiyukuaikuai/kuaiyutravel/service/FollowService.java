@@ -30,4 +30,20 @@ public interface FollowService extends IService<Follow> {
      * @return 共同关注用户列表
      */
     Result followCommons(Long id);
+
+    /**
+     * 查询粉丝列表
+     * @param id 用户ID
+     * @param current 当前页码
+     * @return 粉丝列表
+     */
+    Result queryFans(Long id, Integer current);
+
+    /**
+     * 查询关注列表
+     * @param id 用户ID
+     * @param current 当前页码
+     * @return 关注列表
+     */
+    Result queryFollowings(Long id, Integer current);
 }
