@@ -1,8 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.service.impl;
 
-import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.entity.Poi;
-import com.kuaiyukuaikuai.kuaiyutravel.service.PoiService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 

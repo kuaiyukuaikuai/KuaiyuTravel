@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.test;
 
-import com.kuaiyukuaikuai.kuaiyutravel.entity.Poi;
-import com.kuaiyukuaikuai.kuaiyutravel.service.PoiService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

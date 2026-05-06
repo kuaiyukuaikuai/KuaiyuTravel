@@ -2,7 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
 

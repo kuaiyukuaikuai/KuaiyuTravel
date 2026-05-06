@@ -51,10 +51,15 @@ spring:
 
 # MyBatis-Plus 全局配置
 mybatis-plus:
-  type-aliases-package: com.kuaiyukuaikuai.kuaiyutravel.entity
+  # 扫描 Java 实体类包（使用 * 通配符适配 modules 下的所有 entity 目录）
+  type-aliases-package: com.kuaiyukuaikuai.kuaiyutravel.modules.*.entity
+
   global-config:
     db-config:
       table-prefix: tb_
+
+  # 【新增这一行】告诉 MyBatis 去 resources/mapper 目录下及其所有子目录找 XML
+  mapper-locations: classpath*:mapper/**/*.xml
 
 # 阿里云 OSS 全局配置
 aliyun:

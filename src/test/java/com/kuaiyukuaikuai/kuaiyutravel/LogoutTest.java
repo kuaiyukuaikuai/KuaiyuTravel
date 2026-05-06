@@ -1,8 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel;
 
-import com.kuaiyukuaikuai.kuaiyutravel.dto.LoginFormDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.service.UserService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.LoginFormDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,8 +14,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.LOGIN_CODE_KEY;

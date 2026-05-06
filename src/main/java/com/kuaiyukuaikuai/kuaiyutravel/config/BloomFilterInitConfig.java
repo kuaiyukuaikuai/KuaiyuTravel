@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.config;
 
-import com.kuaiyukuaikuai.kuaiyutravel.mapper.PoiMapper;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import jakarta.annotation.Resource;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;

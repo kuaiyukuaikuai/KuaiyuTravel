@@ -1,8 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.aspect;
 
 import com.kuaiyukuaikuai.kuaiyutravel.annotation.RateLimit;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
 import jakarta.annotation.Resource;
 import org.aspectj.lang.ProceedingJoinPoint;

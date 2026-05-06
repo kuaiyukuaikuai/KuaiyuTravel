@@ -14,7 +14,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import javax.sql.DataSource;
 
 @Configuration
-@MapperScan("com.kuaiyukuaikuai.kuaiyutravel.mapper")
+// 使用通配符扫描 modules 下所有子模块的 mapper 包
+@MapperScan("com.kuaiyukuaikuai.kuaiyutravel.modules.*.mapper")
 public class MybatisConfig {
 
     // 👇👇👇 新增：定义分页拦截器 Bean 👇👇👇
@@ -35,7 +36,7 @@ public class MybatisConfig {
         sessionFactory.setDataSource(dataSource);
 
         // 2. 实体类包名
-        sessionFactory.setTypeAliasesPackage("com.kuaiyukuaikuai.kuaiyutravel.entity");
+        sessionFactory.setTypeAliasesPackage("com.kuaiyukuaikuai.kuaiyutravel.modules.my.mapper.entity");
 
         // 3. XML映射路径
         sessionFactory.setMapperLocations(
