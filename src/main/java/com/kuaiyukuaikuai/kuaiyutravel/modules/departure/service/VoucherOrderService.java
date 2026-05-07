@@ -3,6 +3,9 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.VoucherOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.vo.VoucherOrderVO;
+
+import java.util.List;
 
 /**
  * 优惠券订单服务接口
@@ -27,4 +30,10 @@ public interface VoucherOrderService extends IService<VoucherOrder> {
      * @return 操作结果
      */
     Result commonVoucher(Long voucherId);
+
+    /**
+     * 查询我的订单列表
+     * @return 订单列表
+     */
+    Result queryMyOrders();
 }

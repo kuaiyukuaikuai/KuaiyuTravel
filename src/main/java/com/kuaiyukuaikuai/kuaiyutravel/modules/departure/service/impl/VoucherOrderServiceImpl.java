@@ -11,6 +11,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherOrderSer
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherService;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisIdWorker;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.vo.VoucherOrderVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -23,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 优惠券订单服务实现类
@@ -155,5 +158,45 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 lock.unlock();
             }
         }
+    }
+
+    /**
+     * 查询我的订单列表
+     * @return 订单列表
+     */
+    @Override
+    public Result queryMyOrders() {
+        Long userId = UserHolder.getUser().getId();
+        
+        // 查询当前用户的所有订单
+        List<VoucherOrder> orders = query().eq("user_id", userId).orderByDesc("create_time").list();
+        
+        // 转换为VO对象并填充优惠券信息
+        List<VoucherOrderVO> orderVOs = orders.stream().map(order -> {
+            VoucherOrderVO vo = new VoucherOrderVO();
+            vo.setId(order.getId());
+            vo.setUserId(order.getUserId());
+            vo.setVoucherId(order.getVoucherId());
+            vo.setPayType(order.getPayType());
+            vo.setStatus(order.getStatus());
+            vo.setCreateTime(order.getCreateTime());
+            vo.setPayTime(order.getPayTime());
+            vo.setUseTime(order.getUseTime());
+            vo.setRefundTime(order.getRefundTime());
+            vo.setUpdateTime(order.getUpdateTime());
+            
+            // 获取优惠券信息
+            Voucher voucher = voucherService.getById(order.getVoucherId());
+            if (voucher != null) {
+                vo.setVoucherTitle(voucher.getTitle());
+                vo.setVoucherSubTitle(voucher.getSubTitle());
+                vo.setPayValue(voucher.getPayValue());
+                vo.setActualValue(voucher.getActualValue());
+            }
+            
+            return vo;
+        }).collect(Collectors.toList());
+        
+        return Result.ok(orderVOs);
     }
 }

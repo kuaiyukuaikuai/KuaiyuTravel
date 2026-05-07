@@ -2,12 +2,11 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.controller;
 
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherOrderService;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.vo.VoucherOrderVO;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
+import java.util.List;
 
 /**
  * 优惠券订单控制器
@@ -42,5 +41,15 @@ public class VoucherOrderController {
     @PostMapping("common/{id}")
     public Result commonVoucher(@PathVariable("id") Long voucherId) {
         return voucherOrderService.commonVoucher(voucherId);
+    }
+
+    /**
+     * 查询我的订单列表
+     * 
+     * @return 订单列表
+     */
+    @GetMapping("/my-orders")
+    public Result queryMyOrders() {
+        return voucherOrderService.queryMyOrders();
     }
 }
