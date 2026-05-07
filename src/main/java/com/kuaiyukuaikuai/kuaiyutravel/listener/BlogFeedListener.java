@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.listener;
 
-import com.kuaiyukuaikuai.kuaiyutravel.config.RabbitMQConfig;
+import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.Follow;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.FollowService;
 import lombok.extern.slf4j.Slf4j;

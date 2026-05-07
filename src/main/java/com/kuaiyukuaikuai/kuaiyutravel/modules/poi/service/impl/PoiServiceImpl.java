@@ -7,8 +7,8 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiService;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.CacheClient;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.CacheClient;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
@@ -26,7 +26,7 @@ import jakarta.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.*;
+import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisConstants.*;
 
 /**
  * 景点服务实现类

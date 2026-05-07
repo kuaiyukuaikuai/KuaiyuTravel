@@ -16,8 +16,8 @@ import org.springframework.web.context.WebApplicationContext;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
-import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.LOGIN_CODE_KEY;
-import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.LOGIN_USER_KEY;
+import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisConstants.LOGIN_CODE_KEY;
+import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisConstants.LOGIN_USER_KEY;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;

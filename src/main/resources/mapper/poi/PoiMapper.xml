@@ -23,7 +23,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,name,type_id,images,area,address,
+        id,name,type_id,images,area,address,phone,
         x,y,avg_price,sold,comments,
         score,open_hours,create_time,update_time
     </sql>

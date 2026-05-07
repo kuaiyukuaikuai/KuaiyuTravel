@@ -6,7 +6,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.*;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 

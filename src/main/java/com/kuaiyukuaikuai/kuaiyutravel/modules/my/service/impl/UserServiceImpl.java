@@ -14,8 +14,8 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.SignService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.mapper.UserMapper;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.RegexUtils;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.RegexUtils;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.kuaiyukuaikuai.kuaiyutravel.utils.RedisConstants.*;
-import static com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants.USER_NICK_NAME_PREFIX;
+import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisConstants.*;
+import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants.USER_NICK_NAME_PREFIX;
 
 /**
  * 用户服务实现类

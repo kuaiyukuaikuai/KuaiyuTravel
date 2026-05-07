@@ -13,13 +13,13 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.FollowService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.SystemConstants;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-import com.kuaiyukuaikuai.kuaiyutravel.config.RabbitMQConfig;
+import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
 
 import java.util.HashMap;
 import java.util.Map;

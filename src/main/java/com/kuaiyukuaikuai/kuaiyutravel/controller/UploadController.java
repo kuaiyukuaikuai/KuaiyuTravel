@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.controller;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.AliOssUtil;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.AliOssUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

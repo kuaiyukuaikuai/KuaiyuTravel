@@ -8,7 +8,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.BlogCommentsMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogCommentsService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
-import com.kuaiyukuaikuai.kuaiyutravel.utils.UserHolder;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.metadata.IPage;

@@ -60,6 +60,7 @@ public class Poi implements Serializable {
     @Size(max= 255,message="编码长度不能超过255")
     @Schema(description = "地址")
     private String address;
+
     /**
     * 经度
     */
@@ -114,4 +115,9 @@ public class Poi implements Serializable {
 
     @TableField(exist = false)
     private Double distance;
+
+    /**
+     * 联系电话
+     */
+    private String phone; // 新增字段
 }

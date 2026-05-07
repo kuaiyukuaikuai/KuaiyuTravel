@@ -1,8 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.listener;
 
-import com.kuaiyukuaikuai.kuaiyutravel.config.RabbitMQConfig;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.VoucherOrder;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.VoucherOrderService;
+import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.VoucherOrder;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
