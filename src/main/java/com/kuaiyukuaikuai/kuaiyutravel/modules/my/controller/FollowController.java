@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.my.controller;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.FollowService;
 import org.springframework.web.bind.annotation.*;
 

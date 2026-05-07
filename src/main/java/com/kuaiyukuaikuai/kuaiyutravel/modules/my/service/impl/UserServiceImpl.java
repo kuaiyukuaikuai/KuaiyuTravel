@@ -7,6 +7,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.Sign;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.User;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.*;

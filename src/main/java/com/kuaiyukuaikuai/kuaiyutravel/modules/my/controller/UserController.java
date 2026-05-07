@@ -1,6 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.my.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.User;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.*;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;

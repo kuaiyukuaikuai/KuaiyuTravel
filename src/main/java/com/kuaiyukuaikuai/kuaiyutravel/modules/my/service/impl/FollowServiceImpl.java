@@ -3,7 +3,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.Follow;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.UserInfo;

@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.controller;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Voucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherService;
 import org.springframework.web.bind.annotation.*;

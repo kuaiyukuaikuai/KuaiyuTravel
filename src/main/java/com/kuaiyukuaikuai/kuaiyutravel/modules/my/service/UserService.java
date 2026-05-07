@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.LoginFormDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserPasswordDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserUpdateDTO;

@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.service.impl;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiService;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.impl;
 
 import cn.hutool.json.JSONUtil;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.PoiType;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiTypeMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiTypeService;

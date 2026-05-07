@@ -2,7 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kuaiyukuaikuai.kuaiyutravel.common.annotation.RateLimit;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Blog;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;

@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;

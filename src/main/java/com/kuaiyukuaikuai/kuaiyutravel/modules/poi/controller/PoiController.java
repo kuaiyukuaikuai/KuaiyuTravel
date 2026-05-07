@@ -2,7 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiService;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;

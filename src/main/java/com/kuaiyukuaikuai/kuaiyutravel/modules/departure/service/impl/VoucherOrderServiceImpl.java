@@ -2,7 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Voucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.VoucherOrder;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.VoucherOrderMapper;

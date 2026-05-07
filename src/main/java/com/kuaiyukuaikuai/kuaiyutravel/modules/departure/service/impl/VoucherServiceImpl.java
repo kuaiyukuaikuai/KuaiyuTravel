@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.SeckillVoucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Voucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.SeckillVoucherService;

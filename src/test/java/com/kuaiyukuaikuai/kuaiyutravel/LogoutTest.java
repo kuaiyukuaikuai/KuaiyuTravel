@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.LoginFormDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.*;

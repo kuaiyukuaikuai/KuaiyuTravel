@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.controller;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.BlogComments;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogCommentsService;
 import jakarta.annotation.Resource;

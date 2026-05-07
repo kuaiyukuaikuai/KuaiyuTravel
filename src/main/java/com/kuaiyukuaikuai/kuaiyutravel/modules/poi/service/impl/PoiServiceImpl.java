@@ -3,7 +3,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiService;
