@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.controller;
+package com.kuaiyukuaikuai.kuaiyutravel.common.controller;
 
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.AliOssUtil;

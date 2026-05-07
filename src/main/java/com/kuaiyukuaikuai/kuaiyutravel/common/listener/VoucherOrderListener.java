@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.listener;
+package com.kuaiyukuaikuai.kuaiyutravel.common.listener;
 
 import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.VoucherOrder;
