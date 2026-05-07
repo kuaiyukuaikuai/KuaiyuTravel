@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Group;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.GroupMember;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.GroupMapper;
@@ -17,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+/**
+ * 组团业务实现类
+ */
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements GroupService {
 
@@ -86,6 +90,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             return Result.fail("只有团长可以修改组团信息！");
         }
 
+        // 防篡改保护
         group.setGroupNo(null);
         group.setLeaderId(null);
         group.setCurrentPeople(null);
@@ -121,24 +126,32 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     }
 
     /**
-     * 【新增加：分页查询逻辑】
+     * 分页查询所有招募中的组团信息
      */
     @Override
     public Result queryGroupPage(Integer current, Integer size) {
-        // 1. 设置默认分页参数
-        if (current == null) current = 1;
-        if (size == null) size = 10;
+        // 1. 分页参数健壮性处理
+        if (current == null || current < 1) {
+            current = 1;
+        }
+        if (size == null || size <= 0) {
+            // 复用全局常量
+            size = SystemConstants.DEFAULT_PAGE_SIZE;
+        } else if (size > SystemConstants.MAX_PAGE_SIZE) {
+            // 防止单次查询量过大
+            size = SystemConstants.MAX_PAGE_SIZE;
+        }
 
-        // 2. 构建分页对象
+        // 2. 构造 MyBatis-Plus 分页对象
         Page<Group> page = new Page<>(current, size);
 
-        // 3. 执行分页查询：只查招募中的团 (status = 0)，按创建时间倒序排列
+        // 3. 执行条件查询并分页
         lambdaQuery()
-                .eq(Group::getStatus, 0)
-                .orderByDesc(Group::getCreateTime)
+                .eq(Group::getStatus, 0) // 只查询招募中的
+                .orderByDesc(Group::getCreateTime) // 按发布时间倒序
                 .page(page);
 
-        // 4. 返回分页后的记录列表
-        return Result.ok(page.getRecords());
+        // 4. 返回完整的分页元数据对象，包含 total, pages, records 等
+        return Result.ok(page);
     }
 }
