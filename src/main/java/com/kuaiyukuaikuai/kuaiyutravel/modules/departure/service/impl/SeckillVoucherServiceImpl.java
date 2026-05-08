@@ -1,8 +1,8 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.impl;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.impl;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.SeckillVoucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.SeckillVoucherMapper;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.SeckillVoucherService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.SeckillVoucherService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 

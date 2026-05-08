@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.SeckillVoucher;
 import com.baomidou.mybatisplus.extension.service.IService;

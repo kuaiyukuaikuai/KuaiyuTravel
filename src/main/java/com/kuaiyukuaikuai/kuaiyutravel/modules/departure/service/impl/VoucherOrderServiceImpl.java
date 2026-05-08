@@ -6,7 +6,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Voucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.VoucherOrder;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.VoucherOrderMapper;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.SeckillVoucherService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.SeckillVoucherService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherOrderService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherService;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisIdWorker;

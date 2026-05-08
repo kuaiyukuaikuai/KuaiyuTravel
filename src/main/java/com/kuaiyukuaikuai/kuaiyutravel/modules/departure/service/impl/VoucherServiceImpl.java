@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.SeckillVoucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Voucher;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.SeckillVoucherService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.SeckillVoucherService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.VoucherMapper;
 import jakarta.annotation.Resource;
