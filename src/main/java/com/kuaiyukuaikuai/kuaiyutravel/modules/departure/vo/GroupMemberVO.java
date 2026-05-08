@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.vo;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

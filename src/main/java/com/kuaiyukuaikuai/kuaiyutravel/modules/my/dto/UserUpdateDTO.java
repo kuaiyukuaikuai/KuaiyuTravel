@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.dto;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto;
 
 import lombok.Data;
 import java.time.LocalDate;

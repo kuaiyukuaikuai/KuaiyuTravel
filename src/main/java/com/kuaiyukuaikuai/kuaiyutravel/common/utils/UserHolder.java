@@ -1,6 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.common.utils;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 
 public class UserHolder {
     private static final ThreadLocal<UserDTO> tl = new ThreadLocal<>();

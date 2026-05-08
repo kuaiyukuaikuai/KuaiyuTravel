@@ -1,8 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.impl;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.BlogCommentsVO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.vo.BlogCommentsVO;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.BlogComments;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.BlogCommentsMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogCommentsService;

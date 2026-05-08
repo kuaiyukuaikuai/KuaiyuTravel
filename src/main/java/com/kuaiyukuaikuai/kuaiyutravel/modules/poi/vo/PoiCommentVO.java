@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.vo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

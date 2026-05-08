@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.dto;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo;
 
 import lombok.Data;
 

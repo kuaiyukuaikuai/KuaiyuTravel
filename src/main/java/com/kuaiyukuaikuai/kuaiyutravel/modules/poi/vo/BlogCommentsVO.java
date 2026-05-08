@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.dto;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.vo;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.BlogComments;
 import com.baomidou.mybatisplus.annotation.TableField;

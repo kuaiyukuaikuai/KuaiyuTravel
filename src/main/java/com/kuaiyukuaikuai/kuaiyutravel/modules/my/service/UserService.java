@@ -1,10 +1,10 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.LoginFormDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.LoginFormDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserPasswordDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserUpdateDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserPasswordDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserUpdateDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.http.HttpSession;

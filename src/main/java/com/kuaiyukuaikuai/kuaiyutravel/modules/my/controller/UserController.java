@@ -2,8 +2,11 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.my.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.LoginFormDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserPasswordDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserUpdateDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.User;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.*;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;

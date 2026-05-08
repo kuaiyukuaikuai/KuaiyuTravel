@@ -3,7 +3,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.impl;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.UserInfo;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.mapper.UserInfoMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserInfoService;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserUpdateDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserUpdateDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;

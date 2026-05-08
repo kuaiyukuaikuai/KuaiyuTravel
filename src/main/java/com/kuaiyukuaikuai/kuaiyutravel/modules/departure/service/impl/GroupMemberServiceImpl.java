@@ -9,7 +9,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.GroupMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.GroupMemberMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.GroupMemberService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.vo.GroupMemberVO;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.dto.UserDTO;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.User;
