@@ -23,4 +23,5 @@ public class RedisConstants {
     public static final String POI_GEO_KEY = "poi:geo:";
     public static final String USER_SIGN_KEY = "sign:";
     public static final String POI_BLOOM_FILTER = "poi:bloom-filter";
+    public static final String REDIS_KEY_PREFIX = "kuaiyu:ai:session:";
 }

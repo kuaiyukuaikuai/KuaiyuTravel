@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.RedisConstants.*;
+
 /**
  * 企业级 Redis 短时记忆实现
  * 适配 Spring AI 最新版单参数 get 接口
@@ -31,10 +33,9 @@ public class RedisChatMemory implements ChatMemory {
     @Resource
     private ObjectMapper objectMapper;
 
-    private static final String REDIS_KEY_PREFIX = "kuaiyu:ai:session:";
     private static final long TTL_HOURS = 4;
 
-    // 🚀 面试亮点：在内部定义窗口大小，保证 context 不会无限膨胀导致 Token 爆炸
+    //在内部定义窗口大小，保证 context 不会无限膨胀导致 Token 爆炸
     private static final int DEFAULT_LAST_N = 10;
 
     @Override
@@ -63,9 +64,7 @@ public class RedisChatMemory implements ChatMemory {
         }
     }
 
-    /**
-     * 🚀 修复后的 get 方法：严格匹配接口定义，只接受一个参数
-     */
+
     @Override
     public List<Message> get(String conversationId) {
         Assert.hasText(conversationId, "conversationId cannot be null or empty");
@@ -84,7 +83,7 @@ public class RedisChatMemory implements ChatMemory {
                 String type = wrapper.getType();
                 String payload = wrapper.getPayload();
 
-                // 🚀 手动解析 payload，解决 UserMessage/AssistantMessage 没有无参构造函数的问题
+                // 手动解析 payload，解决 UserMessage/AssistantMessage 没有无参构造函数的问题
                 JsonNode node = objectMapper.readTree(payload);
                 String text = node.has("text") ? node.get("text").asText() :
                         (node.has("content") ? node.get("content").asText() : "");
