@@ -1,53 +1,43 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.controller;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.config.TravelAiTools;
-import org.springframework.ai.chat.client.ChatClient;
-// 💡 修正 1：正确的 Advisor 包路径
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-// 💡 修正 2：使用 ChatMemory 接口
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
+import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.TravelAgentOrchestrator;
+import jakarta.annotation.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
+/**
+ * AI 助手接入层
+ * 职责：仅负责接收请求、身份拦截、以及建立 SSE 流式连接
+ */
 @RestController
 @RequestMapping("/api/agent")
 public class TravelAgentController {
 
-    private final ChatClient chatClient;
-    private final TravelAiTools travelAiTools;
-    private final ChatMemory chatMemory;// 记忆顾问，用于存储和检索用户聊天记录
+    @Resource
+    private TravelAgentOrchestrator travelAgentOrchestrator;
 
-    // 💡 修正 3：使用 Resource 读取文件内容，并且让 Spring 自动注入 ChatMemory
-    public TravelAgentController(ChatClient.Builder chatClientBuilder,
-                                 TravelAiTools travelAiTools,
-                                 ChatMemory chatMemory,
-                                 @Value("classpath:/prompts/agent-system.st") Resource systemPrompt) {
+    /**
+     * 流式对话接口 (SSE)
+     * 面试亮点：使用 Flux<String> 和 TEXT_EVENT_STREAM_VALUE 实现打字机效果
+     *
+     * @param message 用户输入的文本
+     * @param conversationId 会话ID (前端传入，用于区分不同聊天窗口，支持记忆隔离)
+     * @return Flux<String>
+     */
+    @GetMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chat(
+            @RequestParam("message") String message,
+            @RequestParam("conversationId") String conversationId) {
 
-        this.travelAiTools = travelAiTools;
-        this.chatMemory = chatMemory;
+        // 1. 获取当前登录用户 ID
+        Long userId = UserHolder.getUser().getId();
 
-        // 💡 最佳实践：在系统启动时就构建好自带系统人设的 ChatClient
-        this.chatClient = chatClientBuilder
-                .defaultSystem(systemPrompt)
-                .build();
-    }
-
-    @GetMapping("/chat")
-    public String chat(@RequestParam String message) {
-        // 实际业务中，这应该是从 Token 里获取的当前登录用户的 ID。现在先写死方便测试。
-        String chatId = "test-user-id";
-
-        return chatClient.prompt()
-                .user(message)
-                .tools(this.travelAiTools)
-                .advisors(MessageChatMemoryAdvisor.builder(this.chatMemory)
-                        .conversationId(chatId)
-                        .build())
-                .call()
-                .content();
+        // 2. 将复杂的大模型调度、记忆挂载、工具调用全部委托给 Orchestrator (编排层) 处理
+        return travelAgentOrchestrator.streamChat(userId, conversationId, message);
     }
 }
