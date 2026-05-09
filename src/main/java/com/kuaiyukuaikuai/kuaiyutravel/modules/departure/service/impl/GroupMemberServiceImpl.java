@@ -37,10 +37,28 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result joinGroup(Long groupId) {
+    public Result joinGroup(String groupNo) {
         Long userId = UserHolder.getUser().getId();
 
-        // 1. 校验是否已经加入过该团
+        // 1. 通过邀请码查询组团信息，同时获取真实的 groupId（Long 类型）
+        Group group = groupMapper.getGroupByGroupNo(groupNo);
+
+/*        Group group = lambdaQuery(Group.class)
+                .eq(Group::getGroupNo, groupNo)
+                .one();*/
+
+        if (group == null) {
+            return Result.fail("未找到该组团，请检查邀请码是否正确");
+        }
+
+        Long groupId = group.getId();
+
+        // 2. 校验组团状态：只有招募中的团才能加入
+        if (group.getStatus() != 0) {
+            return Result.fail("该组团已关闭或已结束");
+        }
+
+        // 3. 校验是否已经加入过该团
         Long count = lambdaQuery()
                 .eq(GroupMember::getGroupId, groupId)
                 .eq(GroupMember::getUserId, userId)
@@ -49,13 +67,13 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
             return Result.fail("你已经是该团成员，请勿重复加入");
         }
 
-        // 2. 并发安全防超卖：原子操作更新人数
+        // 4. 并发安全防超卖：原子操作更新人数
         int updateCount = groupMapper.incrementCurrentPeople(groupId);
         if (updateCount == 0) {
             return Result.fail("加入失败，组团人数已满或该团已关闭");
         }
 
-        // 3. 插入成员记录
+        // 5. 插入成员记录
         GroupMember member = new GroupMember();
         member.setGroupId(groupId);
         member.setUserId(userId);
@@ -64,7 +82,6 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
 
         return Result.ok();
     }
-
     /**
      * 【核心重构：引入 VO 和 DTO】
      * 查询某个组团的所有成员列表（带用户头像和昵称）

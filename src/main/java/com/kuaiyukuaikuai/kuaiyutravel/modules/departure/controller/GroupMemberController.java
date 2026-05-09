@@ -17,12 +17,12 @@ public class GroupMemberController {
     private GroupMemberService groupMemberService;
 
     /**
-     * 【加入】用户申请加入某个组团
-     * POST /group-member/join/123
+     * 【加入】用户申请加入某个组团（通过邀请码）
+     * POST /group-member/join/{groupNo}
      */
-    @PostMapping("/join/{groupId}")
-    public Result joinGroup(@PathVariable("groupId") Long groupId) {
-        return groupMemberService.joinGroup(groupId);
+    @PostMapping("/join/{groupNo}")
+    public Result joinGroup(@PathVariable("groupNo") String groupNo) {
+        return groupMemberService.joinGroup(groupNo);
     }
 
     /**

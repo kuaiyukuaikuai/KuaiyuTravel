@@ -10,9 +10,9 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.GroupMember;
 public interface GroupMemberService extends IService<GroupMember> {
 
     /**
-     * 加入组团 (含并发安全校验)
+     * 加入组团 (通过邀请码，含并发安全校验)
      */
-    Result joinGroup(Long groupId);
+    Result joinGroup(String groupNo);
 
     /**
      * 查询某个组团的所有成员列表
