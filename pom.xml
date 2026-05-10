@@ -136,6 +136,13 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>net.datafaker</groupId>
+            <artifactId>datafaker</artifactId>
+            <version>2.0.2</version> <!-- 推荐使用 2.x 版本 -->
+            <scope>test</scope> <!-- 仅在测试环境使用，避免打包进生产环境 -->
+        </dependency>
+
     </dependencies>
 
     <!-- 统一管理 Spring AI 版本 -->
