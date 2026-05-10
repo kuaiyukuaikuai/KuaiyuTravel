@@ -11,6 +11,7 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 查询热门博客
+     * 
      * @param current 当前页码
      * @return 热门博客列表
      */
@@ -18,6 +19,7 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 根据ID查询博客
+     * 
      * @param id 博客ID
      * @return 博客详情
      */
@@ -25,6 +27,7 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 点赞博客
+     * 
      * @param id 博客ID
      * @return 操作结果
      */
@@ -32,6 +35,7 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 查询博客点赞用户
+     * 
      * @param id 博客ID
      * @return 点赞用户列表
      */
@@ -39,6 +43,7 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 保存博客
+     * 
      * @param blog 博客信息
      * @return 保存结果
      */
@@ -46,7 +51,8 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 查询关注用户的博客
-     * @param max 最大ID
+     * 
+     * @param max    最大ID
      * @param offset 偏移量
      * @return 博客列表
      */
@@ -54,7 +60,8 @@ public interface BlogService extends IService<Blog> {
 
     /**
      * 根据地点id查询博客
-     * @param poiId 地点id
+     * 
+     * @param poiId   地点id
      * @param current 当前页码
      * @return 博客列表
      */

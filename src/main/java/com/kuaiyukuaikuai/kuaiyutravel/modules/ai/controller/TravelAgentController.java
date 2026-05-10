@@ -28,7 +28,7 @@ public class TravelAgentController {
 
     /**
      * 流式对话接口 (SSE)
-     * 面试亮点：使用 Flux<String> 和 TEXT_EVENT_STREAM_VALUE 实现打字机效果
+     * 使用 Flux<String> 和 TEXT_EVENT_STREAM_VALUE 实现打字机效果
      *
      * @param message 用户输入的文本
      * @param conversationId 会话ID (前端传入，用于区分不同聊天窗口，支持记忆隔离)
