@@ -308,6 +308,15 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
         List<Blog> blogs = page.getRecords();
         // 2.封装并返回
+        // 3. 核心修改：遍历集合，查询并填充每个 blog 的用户信息和点赞状态
+        if (blogs != null && !blogs.isEmpty()) {
+            blogs.forEach(blog -> {
+                // 查询博主信息（头像、昵称）
+                this.queryBlogUser(blog);
+                // 查询当前登录用户是否点赞了该博客
+                this.isBlogLiked(blog);
+            });
+        }
         return Result.ok(blogs);
     }
 
