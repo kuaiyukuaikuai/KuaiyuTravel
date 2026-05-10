@@ -77,14 +77,14 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      */
     @Override
     public Result queryBlogById(Long id) {
-        //1.查询博客
+        // 1.查询博客
         Blog blog = getById(id);
         if (blog == null) {
             return Result.fail("笔记不存在");
         }
-        //2.查询用户
+        // 2.查询用户
         queryBlogUser(blog);
-        //3.查询blog是否被用户点赞
+        // 3.查询blog是否被用户点赞
         isBlogLiked(blog);
         return Result.ok(blog);
     }
@@ -221,8 +221,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.BLOG_EXCHANGE,
                 RabbitMQConfig.BLOG_ROUTING_KEY,
-                message
-        );
+                message);
 
         // 4. 立刻返回id给前端
         return Result.ok(blog.getId());
@@ -320,9 +319,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         return Result.ok(blogs);
     }
 
-
     /**
-     * 检查是否有新动态（红点）
+     * 检查是否有新动态（返回未读数量）
      */
     @Override
     public Result checkRedDot() {
@@ -342,8 +340,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // lastReadTime + 1 相当于开区间 (lastReadTime, +∞)
         Long unreadCount = stringRedisTemplate.opsForZSet().count("feed:" + userId, lastReadTime + 1, Double.MAX_VALUE);
 
-        // 4. 如果数量大于 0，说明有新动态，返回 true 给前端显示红点
-        return Result.ok(unreadCount != null && unreadCount > 0);
+        // 4. 返回具体的未读数量（如果为null则返回0）
+        return Result.ok(unreadCount != null ? unreadCount : 0);
     }
 
     /**
