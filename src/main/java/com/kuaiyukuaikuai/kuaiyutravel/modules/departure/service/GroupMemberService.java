@@ -15,7 +15,12 @@ public interface GroupMemberService extends IService<GroupMember> {
     Result joinGroup(String groupNo);
 
     /**
-     * 查询某个组团的所有成员列表
+     * 查询某个组团的所有成员列表（通过团号，推荐使用）
+     */
+    Result getMembersByGroupNo(String groupNo);
+
+    /**
+     * 查询某个组团的所有成员列表（通过ID，向后兼容）
      */
     Result getMembersByGroupId(Long groupId);
 
@@ -30,7 +35,12 @@ public interface GroupMemberService extends IService<GroupMember> {
     Result removeMember(Long groupId, Long memberUserId);
 
     /**
-     * 用户主动退出组团
+     * 用户主动退出组团（通过团号，推荐使用）
+     */
+    Result exitGroupByNo(String groupNo);
+
+    /**
+     * 用户主动退出组团（通过ID，向后兼容）
      */
     Result exitGroup(Long groupId);
 }

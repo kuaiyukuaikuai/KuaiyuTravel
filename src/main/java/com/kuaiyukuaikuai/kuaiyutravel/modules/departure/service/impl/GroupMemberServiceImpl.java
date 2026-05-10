@@ -83,6 +83,29 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
         return Result.ok();
     }
     /**
+     * 【核心方法：通过团号查询成员列表】
+     * 前端传递 String 类型的 groupNo，避免 JavaScript Long 精度丢失问题
+     */
+    @Override
+    public Result getMembersByGroupNo(String groupNo) {
+        // 1. 参数校验
+        if (groupNo == null || groupNo.trim().isEmpty()) {
+            return Result.fail("组团编号不能为空");
+        }
+
+        // 2. 通过 groupNo 查询组团信息，获取真实的 groupId（Long 类型）
+        Group group = groupMapper.getGroupByGroupNo(groupNo);
+        
+        if (group == null) {
+            return Result.fail("未找到该组团信息");
+        }
+
+        // 3. 获取到精确的 groupId（Long 类型），调用原有的查询逻辑
+        Long groupId = group.getId();
+        return getMembersByGroupId(groupId);
+    }
+
+    /**
      * 【核心重构：引入 VO 和 DTO】
      * 查询某个组团的所有成员列表（带用户头像和昵称）
      */
@@ -181,6 +204,30 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
         }
 
         return Result.ok();
+    }
+
+    /**
+     * 【通过团号退出组团】
+     * 前端传递 String 类型的 groupNo，避免 JavaScript Long 精度丢失问题
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result exitGroupByNo(String groupNo) {
+        // 1. 参数校验
+        if (groupNo == null || groupNo.trim().isEmpty()) {
+            return Result.fail("组团编号不能为空");
+        }
+
+        // 2. 通过 groupNo 查询组团信息，获取真实的 groupId（Long 类型）
+        Group group = groupMapper.getGroupByGroupNo(groupNo);
+        
+        if (group == null) {
+            return Result.fail("未找到该组团信息");
+        }
+
+        // 3. 获取到精确的 groupId（Long 类型），调用原有的退出逻辑
+        Long groupId = group.getId();
+        return exitGroup(groupId);
     }
 
     @Override

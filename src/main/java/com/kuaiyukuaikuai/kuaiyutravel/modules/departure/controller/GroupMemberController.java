@@ -26,7 +26,16 @@ public class GroupMemberController {
     }
 
     /**
-     * 【查询成员】查看某个组团里有哪些人
+     * 【查询成员】查看某个组团里有哪些人（通过团号，推荐使用）
+     * GET /group-member/list/by-groupno/{groupNo}
+     */
+    @GetMapping("/list/by-groupno/{groupNo}")
+    public Result getMembersByGroupNo(@PathVariable("groupNo") String groupNo) {
+        return groupMemberService.getMembersByGroupNo(groupNo);
+    }
+
+    /**
+     * 【查询成员】查看某个组团里有哪些人（通过ID，向后兼容）
      * GET /group-member/list/123
      */
     @GetMapping("/list/{groupId}")
@@ -54,7 +63,16 @@ public class GroupMemberController {
     }
 
     /**
-     * 【退出】普通成员主动退出组团
+     * 【退出】普通成员主动退出组团（通过团号，推荐使用）
+     * DELETE /group-member/exit/by-groupno/{groupNo}
+     */
+    @DeleteMapping("/exit/by-groupno/{groupNo}")
+    public Result exitGroupByNo(@PathVariable("groupNo") String groupNo) {
+        return groupMemberService.exitGroupByNo(groupNo);
+    }
+
+    /**
+     * 【退出】普通成员主动退出组团（通过ID，向后兼容）
      * DELETE /group-member/exit/123
      */
     @DeleteMapping("/exit/{groupId}")
