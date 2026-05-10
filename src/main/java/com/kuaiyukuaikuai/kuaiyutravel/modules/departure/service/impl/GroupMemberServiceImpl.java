@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * 组团成员业务实现类
+ * 统一使用 groupNo（String类型）作为唯一标识，避免前后端 Long 精度丢失问题
  */
 @Service
 public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, GroupMember> implements GroupMemberService {
@@ -33,7 +34,7 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
     private GroupMapper groupMapper;
 
     @Resource
-    private UserService userService; // 注入用户模块的服务，用于获取昵称和头像
+    private UserService UserService; // 注入用户模块的服务，用于获取昵称和头像
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -42,10 +43,6 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
 
         // 1. 通过邀请码查询组团信息，同时获取真实的 groupId（Long 类型）
         Group group = groupMapper.getGroupByGroupNo(groupNo);
-
-/*        Group group = lambdaQuery(Group.class)
-                .eq(Group::getGroupNo, groupNo)
-                .one();*/
 
         if (group == null) {
             return Result.fail("未找到该组团，请检查邀请码是否正确");
@@ -82,6 +79,7 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
 
         return Result.ok();
     }
+    
     /**
      * 【核心方法：通过团号查询成员列表】
      * 前端传递 String 类型的 groupNo，避免 JavaScript Long 精度丢失问题
@@ -126,7 +124,7 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
                 .collect(Collectors.toList());
 
         // 3. 批量查询用户信息 (MyBatis-Plus 的内置方法)
-        List<User> users = userService.listByIds(userIds);
+        List<User> users = UserService.listByIds(userIds);
 
         // 4. 将用户信息转换为 UserDTO 的 Map，方便快速通过 ID 获取，降低时间复杂度到 O(1)
         Map<Long, UserDTO> userDtoMap = users.stream().collect(Collectors.toMap(
@@ -180,25 +178,47 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
         return Result.ok(groupList);
     }
 
+    /**
+     * 【核心方法：通过团号踢人】
+     * 前端传递 String 类型的 groupNo，避免 JavaScript Long 精度丢失问题
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result removeMember(Long groupId, Long memberUserId) {
-        Long currentUserId = UserHolder.getUser().getId();
+    public Result removeMemberByNo(String groupNo, Long memberUserId) {
+        // 1. 参数校验
+        if (groupNo == null || groupNo.trim().isEmpty()) {
+            return Result.fail("组团编号不能为空");
+        }
 
-        Group group = groupMapper.selectById(groupId);
-        if (group == null || !group.getLeaderId().equals(currentUserId)) {
+        // 2. 通过 groupNo 查询组团信息，获取真实的 groupId（Long 类型）
+        Group group = groupMapper.getGroupByGroupNo(groupNo);
+        
+        if (group == null) {
+            return Result.fail("未找到该组团信息");
+        }
+
+        Long currentUserId = UserHolder.getUser().getId();
+        
+        // 3. 校验团长权限
+        if (!group.getLeaderId().equals(currentUserId)) {
             return Result.fail("只有团长可以踢出成员");
         }
 
+        // 4. 团长不能踢出自己
         if (memberUserId.equals(currentUserId)) {
             return Result.fail("团长不能踢出自己，如需解散请使用解散功能");
         }
 
+        // 5. 获取精确的 groupId 进行删除操作
+        Long groupId = group.getId();
+
+        // 6. 删除成员记录
         boolean removed = lambdaUpdate()
                 .eq(GroupMember::getGroupId, groupId)
                 .eq(GroupMember::getUserId, memberUserId)
                 .remove();
 
+        // 7. 如果删除成功，减少当前人数
         if (removed) {
             groupMapper.decrementCurrentPeople(groupId);
         }
@@ -228,6 +248,34 @@ public class GroupMemberServiceImpl extends ServiceImpl<GroupMemberMapper, Group
         // 3. 获取到精确的 groupId（Long 类型），调用原有的退出逻辑
         Long groupId = group.getId();
         return exitGroup(groupId);
+    }
+
+    // ==================== 以下为向后兼容的旧接口实现（基于ID） ====================
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result removeMember(Long groupId, Long memberUserId) {
+        Long currentUserId = UserHolder.getUser().getId();
+
+        Group group = groupMapper.selectById(groupId);
+        if (group == null || !group.getLeaderId().equals(currentUserId)) {
+            return Result.fail("只有团长可以踢出成员");
+        }
+
+        if (memberUserId.equals(currentUserId)) {
+            return Result.fail("团长不能踢出自己，如需解散请使用解散功能");
+        }
+
+        boolean removed = lambdaUpdate()
+                .eq(GroupMember::getGroupId, groupId)
+                .eq(GroupMember::getUserId, memberUserId)
+                .remove();
+
+        if (removed) {
+            groupMapper.decrementCurrentPeople(groupId);
+        }
+
+        return Result.ok();
     }
 
     @Override

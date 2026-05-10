@@ -6,6 +6,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 
 /**
  * 组团业务接口
+ * 所有方法统一使用 groupNo（String类型）作为唯一标识
  */
 public interface GroupService extends IService<Group> {
 
@@ -25,9 +26,9 @@ public interface GroupService extends IService<Group> {
     Result updateGroup(Group group);
 
     /**
-     * 解散/删除组团（需校验团长权限）
+     * 解散/删除组团（通过团号，需校验团长权限）
      */
-    Result deleteGroup(Long groupId);
+    Result deleteGroupByNo(String groupNo);
 
     /**
      * 分页查询所有组团信息 (招募中)

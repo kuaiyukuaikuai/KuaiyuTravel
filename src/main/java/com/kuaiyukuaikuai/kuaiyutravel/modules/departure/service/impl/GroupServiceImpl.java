@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 
 /**
  * 组团业务实现类
+ * 统一使用 groupNo（String类型）作为唯一标识，避免前后端 Long 精度丢失问题
  */
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements GroupService {
@@ -76,11 +77,21 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
     @Override
     public Result updateGroup(Group group) {
-        if (group.getId() == null) {
-            return Result.fail("组团ID不能为空");
+        // 优先使用 groupNo 查询，如果 groupNo 为空则使用 id（向后兼容）
+        Group oldGroup;
+        
+        if (group.getGroupNo() != null && !group.getGroupNo().trim().isEmpty()) {
+            // 推荐方式：通过 groupNo 查询
+            oldGroup = lambdaQuery()
+                    .eq(Group::getGroupNo, group.getGroupNo())
+                    .one();
+        } else if (group.getId() != null) {
+            // 向后兼容：通过 ID 查询
+            oldGroup = getById(group.getId());
+        } else {
+            return Result.fail("组团ID或团号不能为空");
         }
 
-        Group oldGroup = getById(group.getId());
         if (oldGroup == null) {
             return Result.fail("组团不存在");
         }
@@ -90,34 +101,52 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             return Result.fail("只有团长可以修改组团信息！");
         }
 
-        // 防篡改保护
-        group.setGroupNo(null);
-        group.setLeaderId(null);
-        group.setCurrentPeople(null);
-        group.setStatus(null);
+        // 防篡改保护：不允许修改这些关键字段
+        group.setGroupNo(null);          // 团号不可修改
+        group.setLeaderId(null);         // 团长不可修改
+        group.setCurrentPeople(null);     // 人数由系统管理
+        group.setStatus(null);            // 状态由系统管理
 
+        // 确保使用正确的 ID 进行更新
+        group.setId(oldGroup.getId());
         updateById(group);
         return Result.ok();
     }
 
+    /**
+     * 【核心方法：通过团号解散/删除组团】
+     * 前端传递 String 类型的 groupNo，避免 JavaScript Long 精度丢失问题
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result deleteGroup(Long groupId) {
-        if (groupId == null) {
-            return Result.fail("组团ID不能为空");
+    public Result deleteGroupByNo(String groupNo) {
+        // 1. 参数校验
+        if (groupNo == null || groupNo.trim().isEmpty()) {
+            return Result.fail("组团编号不能为空");
         }
 
-        Group group = getById(groupId);
+        // 2. 通过 groupNo 查询组团信息，获取真实的 groupId（Long 类型）
+        Group group = lambdaQuery()
+                .eq(Group::getGroupNo, groupNo)
+                .one();
+
         if (group == null) {
-            return Result.ok();
+            return Result.ok(); // 不存在则视为成功（幂等性）
         }
 
+        // 3. 校验团长权限
         Long currentUserId = UserHolder.getUser().getId();
         if (!group.getLeaderId().equals(currentUserId)) {
             return Result.fail("只有团长可以解散组团！");
         }
 
+        // 4. 获取精确的 groupId 进行删除操作
+        Long groupId = group.getId();
+
+        // 5. 删除组团记录
         removeById(groupId);
+
+        // 6. 删除所有成员关联关系
         groupMemberService.lambdaUpdate()
                 .eq(GroupMember::getGroupId, groupId)
                 .remove();

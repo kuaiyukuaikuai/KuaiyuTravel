@@ -10,12 +10,13 @@ import jakarta.annotation.Resource;
  * 组团出发控制器
  * <p>
  * 提供组团业务相关的 RESTful API 接口，包括：
- * 创建旅行团、根据团号查询旅行团信息、更新旅行团信息、删除旅行团以及分页查询旅行团列表等功能。
+ * 创建旅行团、根据团号查询/更新/删除旅行团信息、分页查询旅行团列表等功能。
+ * 所有接口统一使用 groupNo（String类型）作为唯一标识，避免前后端 Long 精度丢失问题。
  * </p>
  *
  * @author KuaiyuTravel
- * @version 1.0.0
- * @since 1.0.0
+ * @version 2.0.0
+ * @since 2.0.0
  */
 @RestController
 @RequestMapping("/group")
@@ -30,8 +31,8 @@ public class GroupController {
      * 接收前端传递的旅行团实体数据并进行持久化保存，生成新的旅行团记录。
      * </p>
      *
-     * @param group 组团实体对象，包含旅行团的基本信息（如团名、出发地、目的地、出发时间等）
-     * @return Result 统一响应结果，成功时返回创建结果提示或数据，失败时返回错误状态码及信息
+     * @param group 组团实体对象
+     * @return Result 返回创建的组团编号（groupNo）
      */
     @PostMapping("/create")
     public Result createGroup(@RequestBody Group group) {
@@ -40,12 +41,9 @@ public class GroupController {
 
     /**
      * 根据团号查询组团信息
-     * <p>
-     * 通过唯一的旅行团编号（GroupNo）获取该旅行团的详细信息。
-     * </p>
      *
-     * @param groupNo 组团编号，路径参数，唯一标识一个旅行团
-     * @return Result 统一响应结果，成功时 data 包含对应的组团详情，失败时返回相应的错误提示
+     * @param groupNo 组团编号（String 类型）
+     * @return Result 组团详情
      */
     @GetMapping("/query/{groupNo}")
     public Result queryByGroupNo(@PathVariable("groupNo") String groupNo) {
@@ -53,13 +51,13 @@ public class GroupController {
     }
 
     /**
-     * 更新组团信息
+     * 更新组团信息（团长权限）
      * <p>
-     * 接收包含主键及需要修改字段的旅行团实体对象，更新对应的旅行团信息。
+     * 接收包含 groupNo 及需要修改字段的实体对象，更新对应的组团信息。
      * </p>
      *
-     * @param group 组团实体对象，必须包含有效的主键 ID 以及待更新的字段信息
-     * @return Result 统一响应结果，成功时返回更新成功提示，失败时返回错误状态码及信息
+     * @param group 组团实体对象（必须包含 groupNo）
+     * @return Result 更新结果
      */
     @PutMapping("/update")
     public Result updateGroup(@RequestBody Group group) {
@@ -67,28 +65,25 @@ public class GroupController {
     }
 
     /**
-     * 根据 ID 删除组团信息
+     * 根据团号解散/删除组团（团长权限）
      * <p>
-     * 根据传入的旅行团主键 ID，在系统中进行物理或逻辑删除。
+     * 通过唯一的旅行团编号进行删除操作。
      * </p>
      *
-     * @param id 组团实体主键 ID，路径参数
-     * @return Result 统一响应结果，成功时返回删除成功提示，失败时返回相应的错误信息
+     * @param groupNo 组团编号（String 类型）
+     * @return Result 删除结果
      */
-    @DeleteMapping("/{id}")
-    public Result deleteGroup(@PathVariable("id") Long id) {
-        return groupService.deleteGroup(id);
+    @DeleteMapping("/{groupNo}")
+    public Result deleteGroup(@PathVariable("groupNo") String groupNo) {
+        return groupService.deleteGroupByNo(groupNo);
     }
 
     /**
-     * 分页查询组团列表
-     * <p>
-     * 获取系统中的旅行团列表数据，支持分页显示。默认查询第一页，每页10条记录。
-     * </p>
+     * 分页查询组团列表（招募中）
      *
-     * @param current 当前页码，默认值为 1
-     * @param size    每页显示的记录数，默认值为 10
-     * @return Result 统一响应结果，成功时 data 中包含分页对象（包含当前页数据、总记录数等）
+     * @param current 当前页码
+     * @param size 每页大小
+     * @return Result 分页数据
      */
     @GetMapping("/list")
     public Result queryGroupPage(
