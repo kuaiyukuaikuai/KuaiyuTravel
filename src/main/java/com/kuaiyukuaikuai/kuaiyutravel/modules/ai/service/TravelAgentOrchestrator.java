@@ -4,6 +4,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.memory.RedisChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import jakarta.annotation.Resource;
@@ -12,6 +13,7 @@ import jakarta.annotation.Resource;
 public class TravelAgentOrchestrator {
 
     @Resource
+    @Qualifier("agentChatClient")
     private ChatClient chatClient;
     @Resource
     private RedisChatMemory redisChatMemory;
