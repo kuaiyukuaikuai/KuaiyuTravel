@@ -41,6 +41,9 @@ public class RabbitMQConfig {
     public static final String AI_SYNC_QUEUE = "ai.sync.blog.queue"; // AI 同步队列名称
     public static final String AI_SYNC_ROUTING_KEY = "ai.sync.blog"; // AI 同步路由键
 
+    public static final String AI_SYNC_COMMENT_QUEUE = "ai.sync.comment.queue";
+    public static final String AI_SYNC_COMMENT_ROUTING_KEY = "ai.sync.comment";
+
     @Bean
     public DirectExchange blogExchange() {
         return new DirectExchange(BLOG_EXCHANGE);

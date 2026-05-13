@@ -4,6 +4,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Blog;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.BlogMapper;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiCommentMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,9 @@ public class AiKnowledgeSyncListener {
 
     @Resource
     private PoiMapper poiMapper;
+
+    @Resource
+    private PoiCommentMapper commentMapper;
 
     /**
      * 监听 AI 同步队列，实现削峰填谷式的向量化入库
@@ -118,5 +122,59 @@ public class AiKnowledgeSyncListener {
                 realScore,
                 poi.getOpenHours() != null ? poi.getOpenHours() : "未知"
         );
+    }
+
+
+    /**
+     * 🚀 新增：监听评论同步队列
+     */
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(name = RabbitMQConfig.AI_SYNC_COMMENT_QUEUE, durable = "true"),
+            exchange = @Exchange(name = RabbitMQConfig.BLOG_EXCHANGE),
+            key = RabbitMQConfig.AI_SYNC_COMMENT_ROUTING_KEY
+    ))
+    public void listenCommentSyncToMilvus(Long commentId) {
+        log.info("📥 接收到 MQ 消息，开始同步【评论】入 Milvus，评论 ID: {}", commentId);
+
+        try {
+            // 1. 查出刚保存的评论
+            com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.PoiComment comment = commentMapper.selectById(commentId);
+            if (comment == null) {
+                log.warn("评论 ID {} 不存在，可能已被删除，跳过同步。", commentId);
+                return;
+            }
+
+            // 2. 查出关联的 POI，进行【数据扩维】
+            Long poiId = comment.getPoiId() != null ? comment.getPoiId() : 0L;
+            Poi poi = poiMapper.selectById(poiId);
+
+            String poiInfo = buildPoiInfoString(poi); // 复用之前的辅助方法
+            String poiName = poi != null ? poi.getName() : "未知景点";
+
+            // 3. 组装丰满的文本给大模型
+            String text = String.format("这是快鱼旅行用户对【%s】景点的真实评价。该目的地详情如下：%s。用户评分：【%s星】，评价内容：【%s】",
+                    poiName, poiInfo, comment.getScore(), comment.getContent());
+
+            // 4. 打上元数据标签 (极度重要：后续精准检索就靠它)
+            Map<String, Object> metadata = Map.of(
+                    "data_type", "comment", // 🌟 区分这是评论
+                    "source_id", comment.getId(),
+                    "poi_id", poiId,
+                    "poi_name", poiName
+            );
+
+            // 5. 文本切分与向量化入库
+            Document document = new Document(text, metadata);
+            TokenTextSplitter splitter = TokenTextSplitter.builder().build();
+            List<Document> chunkedDocs = splitter.apply(List.of(document));
+
+            vectorStore.add(chunkedDocs);
+
+            log.info("✅ 评论 ID: {} 已成功向量化并存入 Milvus RAG 知识库！", commentId);
+
+        } catch (Exception e) {
+            log.error("❌ 同步评论到 Milvus 失败！评论 ID: {}", commentId, e);
+            throw new RuntimeException("AI 评论同步失败，触发 MQ 重试机制", e);
+        }
     }
 }

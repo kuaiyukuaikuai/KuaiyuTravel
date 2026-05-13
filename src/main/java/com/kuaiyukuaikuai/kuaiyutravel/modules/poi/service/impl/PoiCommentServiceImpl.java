@@ -2,6 +2,7 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
@@ -13,6 +14,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiCommentService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.vo.PoiCommentVO;
 import jakarta.annotation.Resource;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,9 @@ public class PoiCommentServiceImpl extends ServiceImpl<PoiCommentMapper, PoiComm
     
     @Resource
     private UserService userService; // 注入用户服务，用于查头像昵称
+
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -46,6 +51,12 @@ public class PoiCommentServiceImpl extends ServiceImpl<PoiCommentMapper, PoiComm
 
         // 3. 原子操作：将 tb_poi 表里的 comments 数量 + 1
         poiMapper.incrCommentCount(poiComment.getPoiId());
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BLOG_EXCHANGE,
+                RabbitMQConfig.AI_SYNC_COMMENT_ROUTING_KEY,
+                poiComment.getId()
+        );
 
         return Result.ok();
     }
