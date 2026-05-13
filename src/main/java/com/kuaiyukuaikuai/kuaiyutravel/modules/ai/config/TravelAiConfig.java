@@ -57,8 +57,8 @@ public class TravelAiConfig {
     @Bean(name = "aiThreadPool")
     public ExecutorService aiThreadPool() {
         return new ThreadPoolExecutor(
-                20,    // 核心线程数：5（保持5个并发“细水长流”地稳定输出，刚好压在TPM红线边缘）
-                40,    // 最大线程数：8（给网络波动的任务一点缓冲空间，不宜过大）
+                30,    // 核心线程数：5（保持5个并发“细水长流”地稳定输出，刚好压在TPM红线边缘）
+                60,    // 最大线程数：8（给网络波动的任务一点缓冲空间，不宜过大）
                 60L, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(8000), // 队列放开到 5000，让主线程可以一次性把几千个地点全部装进去
                 Executors.defaultThreadFactory(),
