@@ -191,7 +191,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     }
 
     /**
-     * 保存博客 (RabbitMQ 异步推流版)
+     * 保存博客 (纯 MQ 异步推流 + AI 向量库同步版)
      *
      * @param blog 博客信息
      * @return 保存结果
@@ -211,19 +211,28 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
             return Result.fail("新增笔记失败");
         }
 
-        // 3. 异步推送笔记给粉丝 (核心改造)
-        // 封装要发送的消息体（博主ID和刚刚保存的博客ID）
+        // 3. 异步推送笔记给粉丝 (原有逻辑)
         Map<String, Object> message = new HashMap<>();
         message.put("userId", user.getId());
         message.put("blogId", blog.getId());
 
-        // 将任务丢给 RabbitMQ 的博客交换机
+        // 将任务丢给 RabbitMQ 的博客交换机 (路由给粉丝推送队列)
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.BLOG_EXCHANGE,
                 RabbitMQConfig.BLOG_ROUTING_KEY,
                 message);
 
-        // 4. 立刻返回id给前端
+        // ==========================================
+        // 🚀 4. 纯 MQ 方案核心改造：投递给 AI 知识库同步队列
+        // ==========================================
+        // 这里只发送刚保存的游记 ID，让消费者自己去查数据库，保证数据是最新的
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.BLOG_EXCHANGE,
+                RabbitMQConfig.AI_SYNC_ROUTING_KEY, // 新增：专门用于 AI 同步的路由键
+                blog.getId()
+        );
+
+        // 5. 立刻返回id给前端
         return Result.ok(blog.getId());
     }
 

@@ -37,6 +37,10 @@ public class RabbitMQConfig {
     public static final String BLOG_FEED_QUEUE = "blog.feed.queue";
     public static final String BLOG_ROUTING_KEY = "feed.push";
 
+    // 在你的 RabbitMQConfig.java 中补充这几个常量
+    public static final String AI_SYNC_QUEUE = "ai.sync.blog.queue"; // AI 同步队列名称
+    public static final String AI_SYNC_ROUTING_KEY = "ai.sync.blog"; // AI 同步路由键
+
     @Bean
     public DirectExchange blogExchange() {
         return new DirectExchange(BLOG_EXCHANGE);
