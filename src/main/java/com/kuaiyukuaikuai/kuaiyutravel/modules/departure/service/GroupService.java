@@ -32,8 +32,9 @@ public interface GroupService extends IService<Group> {
 
     /**
      * 分页查询所有组团信息 (招募中)
+     * 
      * @param current 当前页码
-     * @param size 每页大小
+     * @param size    每页大小
      */
     Result queryGroupPage(Integer current, Integer size);
 }

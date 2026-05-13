@@ -82,7 +82,7 @@ public class GroupController {
      * 分页查询组团列表（招募中）
      *
      * @param current 当前页码
-     * @param size 每页大小
+     * @param size    每页大小
      * @return Result 分页数据
      */
     @GetMapping("/list")

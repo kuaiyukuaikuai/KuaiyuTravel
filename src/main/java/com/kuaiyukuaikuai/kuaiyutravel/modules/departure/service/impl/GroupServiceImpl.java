@@ -79,7 +79,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
     public Result updateGroup(Group group) {
         // 优先使用 groupNo 查询，如果 groupNo 为空则使用 id（向后兼容）
         Group oldGroup;
-        
+
         if (group.getGroupNo() != null && !group.getGroupNo().trim().isEmpty()) {
             // 推荐方式：通过 groupNo 查询
             oldGroup = lambdaQuery()
@@ -102,10 +102,10 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         }
 
         // 防篡改保护：不允许修改这些关键字段
-        group.setGroupNo(null);          // 团号不可修改
-        group.setLeaderId(null);         // 团长不可修改
-        group.setCurrentPeople(null);     // 人数由系统管理
-        group.setStatus(null);            // 状态由系统管理
+        group.setGroupNo(null); // 团号不可修改
+        group.setLeaderId(null); // 团长不可修改
+        group.setCurrentPeople(null); // 人数由系统管理
+        group.setStatus(null); // 状态由系统管理
 
         // 确保使用正确的 ID 进行更新
         group.setId(oldGroup.getId());
