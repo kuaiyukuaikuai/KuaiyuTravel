@@ -45,6 +45,25 @@ spring:
           model: deepseek-ai/DeepSeek-R1
           temperature: 0.7
       low-level-model: deepseek-ai/DeepSeek-V3
+      embedding:
+        options:
+          # 推荐使用智源的 bge-m3，支持多语言且检索精度极高
+          model: BAAI/bge-m3
+
+    vectorstore:
+      milvus:
+        client:
+          host: 39.108.95.154
+          port: 19530
+        # 你的快鱼旅行知识库集合名称
+        collection-name: kuaiyu_knowledge_v1
+        # BAAI/bge-m3 的向量维度是 1024
+        embedding-dimension: 1024
+        # 设置索引类型和距离计算公式 (L2 欧氏距离)
+        index-type: HNSW
+        metric-type: L2
+        initialize-schema: true
+        index-parameters: '{"M":16,"efConstruction":256}'
 
   # JSON 序列化配置
   jackson:
