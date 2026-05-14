@@ -1,8 +1,8 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.chat;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.TbAiChatMessage;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.TbAiChatSession;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatMessage;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatSession;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.mapper.TbAiChatMessageMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.mapper.TbAiChatSessionMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.memory.RedisChatMemory;

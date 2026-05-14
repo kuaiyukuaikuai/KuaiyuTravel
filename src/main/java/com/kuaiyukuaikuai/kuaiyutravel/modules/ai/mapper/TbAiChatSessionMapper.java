@@ -1,7 +1,7 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.TbAiChatSession;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatSession;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

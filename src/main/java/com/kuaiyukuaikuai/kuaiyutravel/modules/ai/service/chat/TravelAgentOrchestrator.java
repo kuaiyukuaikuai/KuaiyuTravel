@@ -1,6 +1,6 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.chat;
 
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.config.TravelAiTools; // 🚀 引入你的工具类
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.tools.chat.TravelAiTools; // 🚀 引入你的工具类
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.memory.RedisChatMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;

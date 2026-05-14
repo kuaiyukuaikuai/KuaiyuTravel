@@ -1,11 +1,11 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.controller;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.controller.ChatController;
 
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.TbAiChatMessage;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.TbAiChatSession;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.AiChatHistoryService;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.TravelAgentOrchestrator;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatMessage;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatSession;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.chat.AiChatHistoryService;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.chat.TravelAgentOrchestrator;
 import jakarta.annotation.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;

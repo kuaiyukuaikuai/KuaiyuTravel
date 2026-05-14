@@ -1,11 +1,10 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.config;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.tools.chat;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Group;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Voucher;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.GroupMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.VoucherMapper;
-import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import org.springframework.ai.tool.annotation.Tool;
