@@ -18,6 +18,8 @@ spring:
     openai:
       api-key: ${PROD_AI_API_KEY}
 
+AMAP_API_KEY: ${PROD_AMAP_AK}
+
 aliyun:
   oss:
     # 生产环境 OSS 密钥从服务器环境变量读取

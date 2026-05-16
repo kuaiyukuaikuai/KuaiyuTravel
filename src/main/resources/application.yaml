@@ -42,18 +42,17 @@ spring:
       api-key: ${AI_API_KEY:placeholder}
       chat:
         options:
-          model: deepseek-ai/DeepSeek-R1
+          model: deepseek-ai/DeepSeek-V3
           temperature: 0.7
       low-level-model: deepseek-ai/DeepSeek-V3
       embedding:
         options:
           # 推荐使用智源的 bge-m3，支持多语言且检索精度极高
           model: BAAI/bge-m3
-
     vectorstore:
       milvus:
         client:
-          host: 39.108.95.154
+          host: 192.168.100.131
           port: 19530
         # 你的快鱼旅行知识库集合名称
         collection-name: kuaiyu_knowledge_v1
@@ -64,6 +63,20 @@ spring:
         metric-type: L2
         initialize-schema: true
         index-parameters: '{"M":16,"efConstruction":256}'
+    # 【新增】MCP 客户端全局配置
+    # 【完全修复：M4 标准的多连接 MCP 配置】
+    mcp:
+      client:
+        enabled: true
+        sse:
+          connections:
+            # 这里是你给这个连接起的名字 (Spring AI 会用它作为前缀)
+            amap-official-mcp:
+              # 【关键修复】属性名改为了 url，而不是 management-url
+              url: "https://mcp.amap.com?key=${AMAP_API_KEY:placeholder}"
+
+              # 注意：既然你的高德 key 已经拼接在 URL 里了，
+              # 这里就不需要再配置 headers 的 Authorization 了。
 
   # JSON 序列化配置
   jackson:
