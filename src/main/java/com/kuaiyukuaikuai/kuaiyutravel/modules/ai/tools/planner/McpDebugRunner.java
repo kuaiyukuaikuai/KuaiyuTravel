@@ -1,3 +1,4 @@
+/*
 package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.tools.planner;
 
 import io.modelcontextprotocol.client.McpSyncClient;
@@ -41,4 +42,4 @@ public class McpDebugRunner implements CommandLineRunner {
         }
         log.info("========================================");
     }
-}
+}*/
