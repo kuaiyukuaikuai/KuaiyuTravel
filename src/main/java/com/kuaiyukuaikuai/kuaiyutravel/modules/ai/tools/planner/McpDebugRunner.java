@@ -8,11 +8,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+// MCP 连接调试运行器，用于应用启动时验证 MCP 客户端连接状态。
+// 当前已注释停用。如需调试 MCP 连接，取消注释并启动应用即可。
+// 该运行器会列出所有已注册的 MCP 客户端及其暴露的工具列表。
 @Slf4j
 @Component
 public class McpDebugRunner implements CommandLineRunner {
 
-    // 【关键修改】接收 List，因为 Spring 会把所有的 MCP 客户端打包成集合
     private final List<McpSyncClient> mcpClients;
 
     public McpDebugRunner(List<McpSyncClient> mcpClients) {
@@ -22,24 +24,24 @@ public class McpDebugRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("========================================");
-        log.info("🚀 正在向高德 MCP Server 发起底层连接测试...");
+        log.info("正在向高德 MCP Server 发起底层连接测试");
         try {
             if (mcpClients.isEmpty()) {
-                log.warn("❌ 容器中没有找到任何 MCP 客户端！");
+                log.warn("容器中没有找到任何 MCP 客户端");
                 return;
             }
 
-            // 我们目前只配了一个高德，所以直接取第 0 个
             McpSyncClient mcpClient = mcpClients.get(0);
             var tools = mcpClient.listTools().tools();
 
-            log.info("✅ 连接成功！共拉取到 {} 个工具。", tools.size());
+            log.info("连接成功，共拉取到 {} 个工具", tools.size());
             for (var tool : tools) {
-                log.info(" 👉 原始工具名: {}", tool.name());
+                log.info("原始工具名: {}", tool.name());
             }
         } catch (Exception e) {
-            log.error("❌ 连接或拉取工具失败！报错信息: {}", e.getMessage());
+            log.error("连接或拉取工具失败，报错信息: {}", e.getMessage());
         }
         log.info("========================================");
     }
-}*/
+}
+*/

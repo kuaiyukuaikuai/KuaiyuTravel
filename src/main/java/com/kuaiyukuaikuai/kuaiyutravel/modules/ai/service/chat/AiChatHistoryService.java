@@ -1,6 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.service.chat;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatMessage;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.entity.chat.TbAiChatSession;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.ai.mapper.TbAiChatMessageMapper;
@@ -13,6 +15,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * AI 聊天历史记录服务，管理会话与消息的持久化。
+ *
+ * <p>提供聊天记录的异步保存、会话列表查询、消息明细查询及会话删除功能。</p>
+ */
 @Slf4j
 @Service
 public class AiChatHistoryService {
@@ -27,19 +34,25 @@ public class AiChatHistoryService {
     private RedisChatMemory redisChatMemory;
 
     /**
-     * 异步保存单条聊天记录
-     * 面试话术点：使用 @Async 彻底剥离主线程，绝对不影响流式 SSE 的响应速度
+     * 异步保存单条聊天记录。
+     *
+     * <p>使用 {@code @Async} 将持久化操作剥离主线程，避免阻塞流式 SSE 响应。</p>
+     *
+     * @param conversationId 会话 ID
+     * @param userId         用户 ID
+     * @param role           消息角色（user / assistant）
+     * @param content        消息内容
      */
     @Async
     public void asyncSaveMessage(String conversationId, Long userId, String role, String content) {
         try {
-            // 1. 检查是否存在该会话，不存在则初始化 (使用 selectById 极速查询)
+            // 1. 检查会话是否存在，不存在则初始化
             TbAiChatSession session = sessionMapper.selectById(conversationId);
             if (session == null) {
                 session = new TbAiChatSession()
                         .setId(conversationId)
                         .setUserId(userId)
-                        .setTopic("新的旅行规划"); // 后期可以调用大模型自动生成摘要，现在先写死
+                        .setTopic("新的旅行规划");
                 sessionMapper.insert(session);
             }
 
@@ -50,65 +63,75 @@ public class AiChatHistoryService {
                     .setContent(content);
             messageMapper.insert(message);
 
-            log.info("异步落盘成功 -> 会话: [{}], 角色: [{}]", conversationId, role);
+            log.info("异步落盘成功，会话: [{}], 角色: [{}]", conversationId, role);
         } catch (Exception e) {
-            // 异常捕获非常重要，保证底层数据异常不会中断用户正在进行的聊天
+            // 捕获异常防止底层数据错误中断用户聊天流程
             log.error("聊天记录持久化失败, conversationId: {}", conversationId, e);
         }
     }
 
 
     /**
-     * 1. 获取当前用户的所有历史会话列表
-     * @param userId 当前登录用户ID
-     * @return 会话列表（按更新时间倒序排列，最近聊的在最上面）
+     * 获取当前用户的所有历史会话列表。
+     *
+     * <p>按更新时间降序排列，最近活跃的会话排在最前。</p>
+     *
+     * @param userId 当前登录用户 ID
+     * @return 会话列表，按更新时间降序排列
      */
     public List<TbAiChatSession> getUserSessions(Long userId) {
         return sessionMapper.selectList(
                 new LambdaQueryWrapper<TbAiChatSession>()
                         .eq(TbAiChatSession::getUserId, userId)
-                        // 面试细节：一定要按 updateTime 降序，这样用户刚刚回过消息的旧会话也能顶到最上面
                         .orderByDesc(TbAiChatSession::getUpdateTime)
         );
     }
 
     /**
-     * 2. 获取指定会话的历史聊天记录明细
-     * @param conversationId 会话ID
-     * @param userId 当前用户ID (用于越权校验)
-     * @return 聊天记录列表（按创建时间正序排列）
+     * 获取指定会话的历史聊天记录明细。
+     *
+     * <p>按创建时间升序排列，还原真实对话流程。</p>
+     *
+     * @param conversationId 会话 ID
+     * @param userId         当前用户 ID，用于越权校验
+     * @return 聊天记录列表，按创建时间升序排列
+     * @throws BusinessException 无权查看或会话不存在时抛出
      */
     public List<TbAiChatMessage> getSessionMessages(String conversationId, Long userId) {
-        // 安全拦截：防止黑客遍历 conversationId 偷窥别人的旅游计划
+        // 越权校验：防止遍历 conversationId 获取他人会话数据
         TbAiChatSession session = sessionMapper.selectById(conversationId);
         if (session == null || !session.getUserId().equals(userId)) {
-            throw new RuntimeException("无权查看此会话或会话不存在"); // 建议换成你们项目统一的业务异常
+            throw new BusinessException(ErrorCode.FORBIDDEN, "无权查看此会话或会话不存在");
         }
 
         return messageMapper.selectList(
                 new LambdaQueryWrapper<TbAiChatMessage>()
                         .eq(TbAiChatMessage::getSessionId, conversationId)
-                        // 聊天记录必须按时间正序，还原真实的对话流
                         .orderByAsc(TbAiChatMessage::getCreateTime)
         );
     }
 
     /**
-     * 3. 删除指定会话及其所有的聊天明细
+     * 删除指定会话及其所有聊天明细。
+     *
+     * <p>同步清理数据库记录与 Redis 短时记忆，避免残留数据导致"幽灵记忆"。</p>
+     *
+     * @param conversationId 会话 ID
+     * @param userId         当前用户 ID，用于越权校验
      */
     public void deleteSession(String conversationId, Long userId) {
-        // 1. 越权校验
+        // 越权校验
         TbAiChatSession session = sessionMapper.selectById(conversationId);
         if (session != null && session.getUserId().equals(userId)) {
-            // 2. 删除主表
+            // 删除主表
             sessionMapper.deleteById(conversationId);
-            // 3. 删除明细表
+            // 删除明细表
             messageMapper.delete(
                     new LambdaQueryWrapper<TbAiChatMessage>()
                             .eq(TbAiChatMessage::getSessionId, conversationId)
             );
-            // 4. 面试高阶亮点：别忘了把 Redis 里残留的短时记忆也清掉，防止出现“幽灵记忆”
-             redisChatMemory.clear(conversationId);
+            // 清理 Redis 短时记忆
+            redisChatMemory.clear(conversationId);
         }
     }
 }

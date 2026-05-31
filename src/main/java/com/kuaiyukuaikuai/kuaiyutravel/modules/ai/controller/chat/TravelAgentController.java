@@ -1,4 +1,4 @@
-package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.controller.ChatController;
+package com.kuaiyukuaikuai.kuaiyutravel.modules.ai.controller.chat;
 
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
@@ -19,6 +19,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/agent")
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class TravelAgentController {
 
     @Resource
@@ -40,7 +41,7 @@ public class TravelAgentController {
             @RequestParam("conversationId") String conversationId) {
 
         // 1. 获取当前登录用户 ID
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
 
         // 2. 将复杂的大模型调度、记忆挂载、工具调用全部委托给 Orchestrator (编排层) 处理
         return travelAgentOrchestrator.streamChat(userId, conversationId, message);
@@ -50,10 +51,9 @@ public class TravelAgentController {
      */
     @GetMapping("/sessions")
     public Result getSessions() {
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
         List<TbAiChatSession> sessions = aiChatHistoryService.getUserSessions(userId);
 
-        // 完美兼容你的 Result.ok(Object data)
         return Result.ok(sessions);
     }
 
@@ -62,7 +62,7 @@ public class TravelAgentController {
      */
     @GetMapping("/sessions/{conversationId}/messages")
     public Result getMessages(@PathVariable("conversationId") String conversationId) {
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
         List<TbAiChatMessage> messages = aiChatHistoryService.getSessionMessages(conversationId, userId);
 
         return Result.ok(messages);
@@ -73,10 +73,9 @@ public class TravelAgentController {
      */
     @DeleteMapping("/sessions/{conversationId}")
     public Result deleteSession(@PathVariable("conversationId") String conversationId) {
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
         aiChatHistoryService.deleteSession(conversationId, userId);
 
-        // 完美兼容你的 Result.ok() 无参方法
         return Result.ok();
     }
 }
