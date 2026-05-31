@@ -1,14 +1,15 @@
 package com.kuaiyukuaikuai.kuaiyutravel.common.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@Slf4j
 @Configuration
 public class RabbitMQConfig {
 
@@ -62,6 +63,34 @@ public class RabbitMQConfig {
     // ================== 3. 全局 JSON 序列化配置 ==================
     @Bean
     public MessageConverter jsonMessageConverter() {
-        return new JacksonJsonMessageConverter();
+        return new Jackson2JsonMessageConverter();
+    }
+
+    /**
+     * 自定义 RabbitTemplate，启用消息发送确认（Confirm）和路由失败回退（Return）。
+     *
+     * <p>生产环境必须开启，确保消息可靠投递。发送失败时记录日志，便于排查和补偿。</p>
+     */
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(messageConverter);
+
+        // 启用 Confirm 模式：Broker 收到消息后异步回调
+        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+            if (!ack) {
+                log.error("[MQ-CONFIRM] 消息发送失败，Broker 未确认。correlationData={}, cause={}", correlationData, cause);
+            }
+        });
+
+        // 启用 Return 模式：消息无法路由到队列时回调（如路由键错误、队列未绑定）
+        rabbitTemplate.setMandatory(true);
+        rabbitTemplate.setReturnsCallback(returned -> {
+            log.error("[MQ-RETURN] 消息路由失败。exchange={}, routingKey={}, replyCode={}, replyText={}",
+                    returned.getExchange(), returned.getRoutingKey(),
+                    returned.getReplyCode(), returned.getReplyText());
+        });
+
+        return rabbitTemplate;
     }
 }

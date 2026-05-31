@@ -2,6 +2,8 @@ package com.kuaiyukuaikuai.kuaiyutravel.common.utils;
 
 
 import cn.hutool.core.util.RandomUtil;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -23,7 +25,7 @@ public class PasswordEncoder {
             return false;
         }
         if(!encodedPassword.contains("@")){
-            throw new RuntimeException("密码格式不正确！");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "密码格式不正确");
         }
         String[] arr = encodedPassword.split("@");
         // 获取盐

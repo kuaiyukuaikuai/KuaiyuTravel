@@ -18,7 +18,9 @@ import javax.sql.DataSource;
 @MapperScan("com.kuaiyukuaikuai.kuaiyutravel.modules.*.mapper")
 public class MybatisConfig {
 
-    // 👇👇👇 新增：定义分页拦截器 Bean 👇👇👇
+    /**
+     * MyBatis-Plus 分页拦截器。
+     */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
@@ -27,7 +29,9 @@ public class MybatisConfig {
         return interceptor;
     }
 
-    // 注意这里参数里加上了 MybatisPlusInterceptor，让 Spring 自动注入进来
+    /**
+     * 自定义 SqlSessionFactory，注入分页拦截器并配置全局表前缀。
+     */
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource, MybatisPlusInterceptor mybatisPlusInterceptor) throws Exception {
         MybatisSqlSessionFactoryBean sessionFactory = new MybatisSqlSessionFactoryBean();
@@ -50,7 +54,6 @@ public class MybatisConfig {
         globalConfig.setDbConfig(dbConfig);
         sessionFactory.setGlobalConfig(globalConfig);
 
-        // 👇👇👇 新增：手动将分页拦截器塞入你自定义的 sessionFactory 中 👇👇👇
         sessionFactory.setPlugins(mybatisPlusInterceptor);
 
         return sessionFactory.getObject();

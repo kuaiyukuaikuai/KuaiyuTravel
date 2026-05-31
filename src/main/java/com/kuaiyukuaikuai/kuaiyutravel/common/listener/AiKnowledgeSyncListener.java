@@ -1,6 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.common.listener;
 
 import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Blog;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.BlogMapper;
@@ -21,7 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 纯 MQ 方案：AI 知识库同步消费者
+ * AI 知识库同步监听器，基于 MQ 削峰填谷实现向量化数据入库。
+ *
+ * <p>监听游记与评论的变更事件，将数据向量化后写入 Milvus，供 RAG 检索使用。</p>
  */
 @Slf4j
 @Component
@@ -40,8 +44,11 @@ public class AiKnowledgeSyncListener {
     private PoiCommentMapper commentMapper;
 
     /**
-     * 监听 AI 同步队列，实现削峰填谷式的向量化入库
-     * (这里使用了 @QueueBinding 注解，Spring Boot 启动时会自动帮你创建队列并绑定到交换机上)
+     * 监听游记同步队列，实现削峰填谷式的向量化入库。
+     *
+     * <p>使用 {@code @QueueBinding} 注解，Spring Boot 启动时自动创建队列并绑定到交换机。</p>
+     *
+     * @param blogId 游记 ID
      */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(name = RabbitMQConfig.AI_SYNC_QUEUE, durable = "true"),
@@ -49,28 +56,28 @@ public class AiKnowledgeSyncListener {
             key = RabbitMQConfig.AI_SYNC_ROUTING_KEY
     ))
     public void listenBlogSyncToMilvus(Long blogId) {
-        log.info("📥 接收到 MQ 消息，开始同步游记入 Milvus，游记 ID: {}", blogId);
+        log.info("接收到 MQ 消息，开始同步游记入 Milvus，游记 ID: {}", blogId);
 
         try {
-            // 1. 查出刚保存的游记 (由于是从 MQ 获取，这里查出来的数据绝对是事务提交后的最新数据)
+            // 1. 查询游记数据（MQ 消费时事务已提交，确保获取到最新数据）
             Blog blog = blogMapper.selectById(blogId);
             if (blog == null) {
-                log.warn("游记 ID {} 不存在，可能已被删除，跳过同步。", blogId);
+                log.warn("游记 ID {} 不存在，可能已被删除，跳过同步", blogId);
                 return;
             }
 
-            // 2. 查出关联的 POI，进行【数据扩维】
+            // 2. 查询关联 POI 数据，扩展文本维度
             Long poiId = blog.getPoiId() != null ? blog.getPoiId() : 0L;
             Poi poi = poiMapper.selectById(poiId);
 
             String poiInfo = buildPoiInfoString(poi);
             String poiName = poi != null ? poi.getName() : "未知景点";
 
-            // 3. 组装丰满的文本给大模型
+            // 3. 组装文本供大模型处理
             String text = String.format("这是一篇关于【%s】的快鱼旅行用户最新游记。该目的地详情如下：%s。游记标题：【%s】，内容：【%s】",
                     poiName, poiInfo, blog.getTitle(), blog.getContent());
 
-            // 4. 打上元数据标签 (极度重要：后续精准检索就靠它)
+            // 4. 构建元数据标签，用于后续精准检索
             Map<String, Object> metadata = Map.of(
                     "data_type", "blog",
                     "source_id", blog.getId(),
@@ -81,37 +88,30 @@ public class AiKnowledgeSyncListener {
 
             // 5. 文本切分与向量化入库
             Document document = new Document(text, metadata);
-            // 文本切分
             TokenTextSplitter splitter = TokenTextSplitter.builder()
-                    .withChunkSize(600) // 考虑到前缀变长了，ChunkSize 稍微调大一点
+                    .withChunkSize(600)
                     .withMinChunkSizeChars(100)
                     .withKeepSeparator(true)
                     .build();
 
-/*            // 文本切分
-            TokenTextSplitter splitter = TokenTextSplitter.builder()
-                    .withChunkSize(600) // 考虑到前缀变长了，ChunkSize 稍微调大一点
-                    .withMinChunkSizeChars(100)
-                    .withKeepSeparator(true)
-                    .build();*/
-
-
-
             List<Document> chunkedDocs = splitter.apply(List.of(document));
 
-            vectorStore.add(chunkedDocs); // 这一步会调用硅基流动大模型 API，并写入 Milvus
-            
-            log.info("✅ 游记 ID: {} 已成功向量化并存入 Milvus RAG 知识库！", blogId);
+            vectorStore.add(chunkedDocs);
+
+            log.info("游记 ID: {} 已成功向量化并存入 Milvus RAG 知识库", blogId);
 
         } catch (Exception e) {
-            // 如果遇到网络波动导致向量化失败，抛出异常，RabbitMQ 会自动重试！
-            log.error("❌ 同步游记到 Milvus 失败！游记 ID: {}", blogId, e);
-            throw new RuntimeException("AI 同步失败，触发 MQ 重试机制", e);
+            // 网络波动等异常触发 RabbitMQ 自动重试
+            log.error("同步游记到 Milvus 失败，游记 ID: {}", blogId, e);
+            throw new BusinessException(ErrorCode.SERVER_ERROR, "AI 同步失败，触发 MQ 重试机制");
         }
     }
 
     /**
-     * 辅助方法：POI 数据转自然语言
+     * 将 POI 数据转换为自然语言描述。
+     *
+     * @param poi POI 实体
+     * @return POI 的自然语言描述字符串
      */
     private String buildPoiInfoString(Poi poi) {
         if (poi == null) return "无详细地址和价格信息";
@@ -126,7 +126,9 @@ public class AiKnowledgeSyncListener {
 
 
     /**
-     * 🚀 新增：监听评论同步队列
+     * 监听评论同步队列，将评论数据向量化入库。
+     *
+     * @param commentId 评论 ID
      */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(name = RabbitMQConfig.AI_SYNC_COMMENT_QUEUE, durable = "true"),
@@ -134,30 +136,30 @@ public class AiKnowledgeSyncListener {
             key = RabbitMQConfig.AI_SYNC_COMMENT_ROUTING_KEY
     ))
     public void listenCommentSyncToMilvus(Long commentId) {
-        log.info("📥 接收到 MQ 消息，开始同步【评论】入 Milvus，评论 ID: {}", commentId);
+        log.info("接收到 MQ 消息，开始同步评论入 Milvus，评论 ID: {}", commentId);
 
         try {
-            // 1. 查出刚保存的评论
+            // 1. 查询评论数据
             com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.PoiComment comment = commentMapper.selectById(commentId);
             if (comment == null) {
-                log.warn("评论 ID {} 不存在，可能已被删除，跳过同步。", commentId);
+                log.warn("评论 ID {} 不存在，可能已被删除，跳过同步", commentId);
                 return;
             }
 
-            // 2. 查出关联的 POI，进行【数据扩维】
+            // 2. 查询关联 POI 数据，扩展文本维度
             Long poiId = comment.getPoiId() != null ? comment.getPoiId() : 0L;
             Poi poi = poiMapper.selectById(poiId);
 
-            String poiInfo = buildPoiInfoString(poi); // 复用之前的辅助方法
+            String poiInfo = buildPoiInfoString(poi);
             String poiName = poi != null ? poi.getName() : "未知景点";
 
-            // 3. 组装丰满的文本给大模型
+            // 3. 组装文本供大模型处理
             String text = String.format("这是快鱼旅行用户对【%s】景点的真实评价。该目的地详情如下：%s。用户评分：【%s星】，评价内容：【%s】",
                     poiName, poiInfo, comment.getScore(), comment.getContent());
 
-            // 4. 打上元数据标签 (极度重要：后续精准检索就靠它)
+            // 4. 构建元数据标签，区分评论类型
             Map<String, Object> metadata = Map.of(
-                    "data_type", "comment", // 🌟 区分这是评论
+                    "data_type", "comment",
                     "source_id", comment.getId(),
                     "poi_id", poiId,
                     "poi_name", poiName
@@ -170,11 +172,11 @@ public class AiKnowledgeSyncListener {
 
             vectorStore.add(chunkedDocs);
 
-            log.info("✅ 评论 ID: {} 已成功向量化并存入 Milvus RAG 知识库！", commentId);
+            log.info("评论 ID: {} 已成功向量化并存入 Milvus RAG 知识库", commentId);
 
         } catch (Exception e) {
-            log.error("❌ 同步评论到 Milvus 失败！评论 ID: {}", commentId, e);
-            throw new RuntimeException("AI 评论同步失败，触发 MQ 重试机制", e);
+            log.error("同步评论到 Milvus 失败，评论 ID: {}", commentId, e);
+            throw new BusinessException(ErrorCode.SERVER_ERROR, "AI 评论同步失败，触发 MQ 重试机制");
         }
     }
 }

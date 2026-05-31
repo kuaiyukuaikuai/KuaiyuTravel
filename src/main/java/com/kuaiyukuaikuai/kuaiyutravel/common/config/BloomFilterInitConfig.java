@@ -2,12 +2,14 @@ package com.kuaiyukuaikuai.kuaiyutravel.common.config;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.PoiMapper;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
+@Slf4j
 @Component
 public class BloomFilterInitConfig implements CommandLineRunner {
 
@@ -33,7 +35,7 @@ public class BloomFilterInitConfig implements CommandLineRunner {
         for (Long id : poiIdList) {
             bloomFilter.add(id);
         }
-        
-        System.out.println("✅ 布隆过滤器预热完成，共加载 POI 数量：" + poiIdList.size());
+
+        log.info("布隆过滤器预热完成，共加载 POI 数量：{}", poiIdList.size());
     }
 }
