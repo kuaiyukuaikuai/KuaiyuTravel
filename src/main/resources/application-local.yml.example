@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    # 覆盖为主配置文件中的 DB_HOST 和密码，连接测试服务器
+    url: jdbc:mysql://<数据库IP>:3306/kuaiyu_travel?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    password: <数据库密码>
+  data:
+    redis:
+      host: <RedisIP>
+      password: <Redis密码>
+  rabbitmq:
+    host: <RabbitMQIP>
+    port: 5672
+    username: <RabbitMQ用户名>
+    password: <RabbitMQ密码>
+
+  # 本地测试注入真实的 AI 密钥
+  ai:
+    openai:
+      api-key: <你的AI API密钥>
+
+# 对应 application.yaml 中的占位符，注入真实的 Key
+amap:
+  mcp:
+    key: <你的高德地图Key>
+
+aliyun:
+  oss:
+    access-key-id: <你的OSS AccessKeyId>
+    access-key-secret: <你的OSS AccessKeySecret>
