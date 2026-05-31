@@ -7,7 +7,8 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.LoginFormDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserPasswordDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserUpdateDTO;
@@ -50,10 +51,10 @@ import static com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants.USER_
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
-    
+
     @Resource
     private UserInfoService userInfoService;
-    
+
     @Resource
     private SignService signService;
 
@@ -61,46 +62,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 发送验证码
      * @param phone 手机号
      * @param session 会话
-     * @return 操作结果
      */
     @Override
-    public Result sendCode(String phone, HttpSession session) {
+    public void sendCode(String phone, HttpSession session) {
         // 校验手机号
         if (RegexUtils.isPhoneInvalid(phone)) {
-            return Result.fail("手机号格式错误！");
+            throw new BusinessException(ErrorCode.USER_PHONE_INVALID, "手机号格式错误！");
         }
+
+        // 频率限制：60秒内禁止重复发送
+        String limitKey = "login:code:limit:" + phone;
+        Boolean hasLimit = stringRedisTemplate.hasKey(limitKey);
+        if (Boolean.TRUE.equals(hasLimit)) {
+            throw new BusinessException(ErrorCode.SYSTEM_RATE_LIMIT, "发送过于频繁，请60秒后再试");
+        }
+
         // 生成验证码
         String code = RandomUtil.randomNumbers(6);
         // 保存验证码到 Redis
         stringRedisTemplate.opsForValue().set(LOGIN_CODE_KEY + phone, code, LOGIN_CODE_TTL, TimeUnit.MINUTES);
+        // 设置发送频率限制（60秒）
+        stringRedisTemplate.opsForValue().set(limitKey, "1", 60, TimeUnit.SECONDS);
+
         // 发送验证码
         log.debug("发送短信验证码成功，验证码：{}", code);
-
-        // 返回结果
-        return Result.ok();
     }
 
     /**
      * 登录
      * @param loginForm 登录表单
      * @param session 会话
-     * @return 登录结果
+     * @return 登录成功的 token
      */
     @Override
-    public Result login(LoginFormDTO loginForm, HttpSession session) {
+    public String login(LoginFormDTO loginForm, HttpSession session) {
         // 1.校验手机号
         String phone = loginForm.getPhone();
         if (RegexUtils.isPhoneInvalid(phone)) {
-            // 2.如果不符合，返回错误信息
-            return Result.fail("手机号格式错误！");
+            // 2.如果不符合，抛出异常
+            throw new BusinessException(ErrorCode.USER_PHONE_INVALID, "手机号格式错误！");
         }
         // 3.从redis获取验证码并校验
-        String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
+        String codeKey = LOGIN_CODE_KEY + phone;
+        String cacheCode = stringRedisTemplate.opsForValue().get(codeKey);
         String code = loginForm.getCode();
-        if (cacheCode == null || !cacheCode.equals(code)) {
+        if (cacheCode == null || code == null || !cacheCode.equals(code)) {
             // 不一致，报错
-            return Result.fail("验证码错误");
+            throw new BusinessException(ErrorCode.USER_CODE_ERROR, "验证码错误");
         }
+        // 验证码校验成功后立即删除，防止重放攻击
+        stringRedisTemplate.delete(codeKey);
 
         // 4.一致，根据手机号查询用户 select * from tb_user where phone = ?
         User user = query().eq("phone", phone).one();
@@ -127,47 +138,44 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES);
 
         // 8.返回token
-        return Result.ok(token);
+        return token;
     }
 
     /**
      * 退出登录
      * @param token 令牌
-     * @return 操作结果
      */
     @Override
-    public Result logout(String token) {
+    public void logout(String token) {
         // 1. 构建Redis中的token key
         String tokenKey = LOGIN_USER_KEY + token;
-        
+
         // 2. 删除Redis中的用户登录信息
         stringRedisTemplate.delete(tokenKey);
-        
+
         // 3. 清除ThreadLocal中的用户信息
         UserHolder.removeUser();
-        
+
         log.debug("用户登出成功，token: {}", token);
-        return Result.ok();
     }
 
     /**
      * 签到
-     * @return 签到结果
      */
     @Override
     @Transactional
-    public Result sign() {
+    public void sign() {
         // 1.获取当前登录用户
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
         // 2.获取当前日期
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
-        
+
         // 3.防重校验：检查用户今天是否已经签到
         if (signService.hasSigned(userId, today)) {
-            return Result.fail("今天已经签到过了");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "今天已经签到过了");
         }
-        
+
         // 4.存入MySQL：构建Sign实体类并保存
         Sign sign = new Sign();
         sign.setUserId(userId);
@@ -176,14 +184,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         sign.setDate(today);
         sign.setIsBackup(0);
         signService.save(sign);
-        
+
         // 5.存入Redis：保持原有的Redis BitMap写入逻辑
         String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
         String key = USER_SIGN_KEY + userId + keySuffix;
         int day = now.getDayOfMonth();
         stringRedisTemplate.opsForValue().setBit(key, day - 1, true);
-        
-        return Result.ok();
     }
 
     /**
@@ -191,9 +197,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 签到次数
      */
     @Override
-    public Result signCount() {
+    public Integer signCount() {
         // 1.获取当前登录用户
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
         // 2.获取日期
         LocalDateTime now = LocalDateTime.now();
         // 3.拼接key
@@ -209,11 +215,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         );
         if (result == null || result.size() == 0) {
             // 没有任何签到结果
-            return Result.ok(0);
+            return 0;
         }
         Long num = result.get(0);
         if (num == null || num == 0) {
-            return Result.ok(0);
+            return 0;
         }
         // 6.循环遍历
         // 7.让这个数字与1做与运算，得到数字的最后一个bit位
@@ -228,19 +234,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             num = num >> 1;
         }
-        return Result.ok(count);
+        return count;
     }
 
     /**
      * 更新用户信息
      * @param updateDTO 更新信息
-     * @return 操作结果
      */
     @Override
     @Transactional
-    public Result updateUserInfo(UserUpdateDTO updateDTO) {
+    public void updateUserInfo(UserUpdateDTO updateDTO) {
         // 1. 从当前线程(Token)中获取当前登录用户的 ID
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
 
         // 2. 构建需要更新的 User 对象
         User user = new User();
@@ -264,31 +269,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 stringRedisTemplate.opsForHash().put(tokenKey, "icon", updateDTO.getIcon());
             }
         }
-
-        return Result.ok();
     }
 
     /**
      * 更新密码
      * @param passwordDTO 密码信息
-     * @return 操作结果
      */
     @Override
-    public Result updatePassword(UserPasswordDTO passwordDTO) {
-        Long userId = UserHolder.getUser().getId();
+    public void updatePassword(UserPasswordDTO passwordDTO) {
+        Long userId = UserHolder.getUserId();
 
         String oldPassword = passwordDTO.getOldPassword();
         String newPassword = passwordDTO.getNewPassword();
 
         // 1. 校验新密码不能为空
         if (newPassword == null || newPassword.trim().isEmpty()) {
-            return Result.fail("新密码不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "新密码不能为空");
         }
 
         // 2. 查询当前用户信息
         User user = getById(userId);
         if (user == null) {
-            return Result.fail("用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "用户不存在");
         }
 
         String dbPassword = user.getPassword();
@@ -300,23 +302,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } else {
             // 场景 B：修改密码，必须严格校验
             if (oldPassword == null || oldPassword.trim().isEmpty()) {
-                return Result.fail("原密码不能为空");
+                throw new BusinessException(ErrorCode.PARAM_ERROR, "原密码不能为空");
             }
 
-            // ⚔️ 校验旧密码是否正确
+            // 校验旧密码是否正确
             // BCrypt.checkpw(明文密码, 数据库里的密文) -> 返回 true 或 false
             if (!BCrypt.checkpw(oldPassword, dbPassword)) {
-                return Result.fail("原密码输入错误");
+                throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR, "原密码输入错误");
             }
 
-            // ⚔️ 校验新密码不能和旧密码一样
+            // 校验新密码不能和旧密码一样
             // 如果新密码的明文，能和数据库里的旧密文匹配上，说明新旧密码一样
             if (BCrypt.checkpw(newPassword, dbPassword)) {
-                return Result.fail("新密码不能与原密码相同");
+                throw new BusinessException(ErrorCode.PARAM_ERROR, "新密码不能与原密码相同");
             }
         }
 
-        // 4. 对新密码进行 Bcrypt 加密 🔒
+        // 4. 对新密码进行 Bcrypt 加密
         // BCrypt.hashpw 会自动生成随机盐并进行加密，生成一条长度为 60 的密文
         String hashedNewPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
 
@@ -331,24 +333,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String token = request.getHeader("authorization");
         stringRedisTemplate.delete(LOGIN_USER_KEY + token);
-
-        return Result.ok();
     }
 
     /**
      * 密码登录
      * @param loginForm 登录表单
-     * @return 登录结果
+     * @return 登录成功的 token
      */
     @Override
-    public Result loginByPassword(LoginFormDTO loginForm) {
+    public String loginByPassword(LoginFormDTO loginForm) {
         // 1. 获取前端传来的账号(这里以手机号 phone 为例)和密码
         String phone = loginForm.getPhone();
         String password = loginForm.getPassword();
 
         // 2. 基本非空校验
         if (StrUtil.isBlank(phone) || StrUtil.isBlank(password)) {
-            return Result.fail("手机号和密码不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "手机号和密码不能为空");
         }
 
         // 3. 根据手机号去数据库查询用户
@@ -357,16 +357,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 4. 如果没查到，说明该账号还没注册
         if (user == null) {
-            return Result.fail("该用户不存在，请先注册");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "该用户不存在，请先注册");
         }
 
-        // 5. ⚔️ 核心：校验密码 (使用 Bcrypt)
+        // 5. 核心：校验密码 (使用 Bcrypt)
         // 注意：BCrypt.checkpw() 第一个参数是前端传的明文，第二个参数是数据库查出来的密文
         if (!BCrypt.checkpw(password, user.getPassword())) {
-            return Result.fail("账号或密码错误");
+            throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR, "账号或密码错误");
         }
 
-        // 6. 登录成功！生成随机的 Token 作为用户的“通行证”
+        // 6. 登录成功！生成随机的 Token 作为用户的"通行证"
         String token = UUID.randomUUID().toString(true);
 
         // 7. 保护隐私：绝对不能把包含密码的完整 User 存入 Redis，要转换成 UserDTO
@@ -385,8 +385,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 9. 设置 Token 的过期时间 (例如 30 分钟。用户如果不活跃，半小时后自动掉线)
         stringRedisTemplate.expire(tokenKey, 30, TimeUnit.MINUTES);
 
-        // 10. 最终将生成的 token 返回给前端
-        return Result.ok(token);
+        // 10. 最终将生成的 token 返回
+        return token;
     }
 
     /**

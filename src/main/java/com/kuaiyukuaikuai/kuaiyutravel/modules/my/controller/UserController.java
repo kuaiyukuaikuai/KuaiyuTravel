@@ -6,6 +6,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.LoginFormDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserPasswordDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserUpdateDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.User;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.UserInfo;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserInfoService;
@@ -16,11 +17,12 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 
 /**
  * 用户控制器
  * 处理用户相关的请求
- * 
+ *
  * @author 快鱼
  * @since 2026-04-17
  */
@@ -40,31 +42,33 @@ public class UserController {
 
     /**
      * 发送手机验证码
-     * 
+     *
      * @param phone 手机号
      * @param session 会话
      * @return 发送结果
      */
     @PostMapping("code")
     public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
-        return userService.sendCode(phone, session);
+        userService.sendCode(phone, session);
+        return Result.ok();
     }
 
     /**
      * 登录功能
-     * 
+     *
      * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
      * @param session 会话
      * @return 登录结果
      */
     @PostMapping("/login")
-    public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session) {
-        return userService.login(loginForm, session);
+    public Result login(@RequestBody @Valid LoginFormDTO loginForm, HttpSession session) {
+        String token = userService.login(loginForm, session);
+        return Result.ok(token);
     }
 
     /**
      * 登出功能
-     * 
+     *
      * @param request 请求
      * @return 登出结果
      */
@@ -75,14 +79,15 @@ public class UserController {
         if (cn.hutool.core.util.StrUtil.isBlank(token)) {
             return Result.fail("未登录");
         }
-        
+
         // 2. 调用userService执行登出逻辑
-        return userService.logout(token);
+        userService.logout(token);
+        return Result.ok();
     }
 
     /**
      * 获取当前登录用户信息
-     * 
+     *
      * @return 用户信息
      */
     @GetMapping("/me")
@@ -93,18 +98,19 @@ public class UserController {
 
     /**
      * 获取用户详情
-     * 
+     *
      * @param userId 用户id
      * @return 用户详情
      */
     @GetMapping("/info/{id}")
     public Result info(@PathVariable("id") Long userId) {
-        return userInfoService.getUserInfoDetail(userId);
+        UserInfo info = userInfoService.getUserInfoDetail(userId);
+        return Result.ok(info);
     }
 
     /**
      * 根据id查询用户
-     * 
+     *
      * @param userId 用户id
      * @return 用户信息
      */
@@ -122,56 +128,61 @@ public class UserController {
 
     /**
      * 签到功能
-     * 
+     *
      * @return 签到结果
      */
     @PostMapping("/sign")
     public Result sign() {
-        return userService.sign();
+        userService.sign();
+        return Result.ok();
     }
 
     /**
      * 统计签到功能
-     * 
+     *
      * @return 签到统计结果
      */
     @GetMapping("/sign/count")
     public Result signCount() {
-        return userService.signCount();
+        Integer count = userService.signCount();
+        return Result.ok(count);
     }
 
     /**
      * 修改用户基本资料 (昵称、头像)
-     * 
+     *
      * @param updateDTO 用户更新信息
      * @return 更新结果
      */
     @PutMapping("/info")
-    public Result updateUserInfo(@RequestBody UserUpdateDTO updateDTO) {
+    public Result updateUserInfo(@RequestBody @Valid UserUpdateDTO updateDTO) {
         // 交给 Service 层处理具体逻辑
-        return userService.updateUserInfo(updateDTO);
+        userService.updateUserInfo(updateDTO);
+        return Result.ok();
     }
 
     /**
      * 修改密码
-     * 
+     *
      * @param passwordDTO 密码更新信息
      * @return 更新结果
      */
     @PutMapping("/password")
-    public Result updatePassword(@RequestBody UserPasswordDTO passwordDTO) {
-        return userService.updatePassword(passwordDTO);
+    public Result updatePassword(@RequestBody @Valid UserPasswordDTO passwordDTO) {
+        userService.updatePassword(passwordDTO);
+        return Result.ok();
     }
 
     /**
      * 密码登录功能
-     * 
+     *
      * @param loginForm 登录参数
      * @return 登录结果
      */
     @PostMapping("/login/password")
-    public Result loginByPassword(@RequestBody LoginFormDTO loginForm) {
+    public Result loginByPassword(@RequestBody @Valid LoginFormDTO loginForm) {
         // 将具体的业务逻辑交给 Service 层处理
-        return userService.loginByPassword(loginForm);
+        String token = userService.loginByPassword(loginForm);
+        return Result.ok(token);
     }
 }

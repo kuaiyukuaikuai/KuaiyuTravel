@@ -3,7 +3,8 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.Follow;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.UserInfo;
@@ -36,19 +37,18 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private UserService userService;
     @Resource
     private UserInfoService userInfoService;
-    
+
     /**
      * 关注或取消关注
      * @param followUserId 被关注用户ID
      * @param isFollow 是否关注
-     * @return 操作结果
      */
     @Override
     @Transactional
-    public Result follow(Long followUserId, Boolean isFollow) {
+    public void follow(Long followUserId, Boolean isFollow) {
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
         // 1.判断关注还是取关
@@ -83,7 +83,6 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 userInfoService.update().setSql("fans = fans - 1").eq("user_id", followUserId).gt("fans", 0).update();
             }
         }
-        return Result.ok();
     }
 
     /**
@@ -107,16 +106,16 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
      * @return 关注状态
      */
     @Override
-    public Result isFollow(Long followUserId) {
+    public Boolean isFollow(Long followUserId) {
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
         Long count = query()
                 .eq("user_id", userId)
                 .eq("follow_user_id", followUserId).count();
-        return Result.ok(count > 0);
+        return count > 0;
     }
 
     /**
@@ -125,15 +124,15 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
      * @return 共同关注用户列表
      */
     @Override
-    public Result followCommons(Long id) {
+    public List<UserDTO> followCommons(Long id) {
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
         Set<String> intersect = stringRedisTemplate.opsForSet().intersect("follows:" + id, "follows:" + userId);
         if (intersect == null || intersect.isEmpty()) {
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
         //解析id集合
         List<Long> ids = intersect.stream().map(Long::valueOf).collect(Collectors.toList());
@@ -142,7 +141,7 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 .stream()
                 .map(u -> BeanUtil.copyProperties(u,UserDTO.class))
                 .collect(Collectors.toList());
-        return Result.ok(users);
+        return users;
     }
 
     /**
@@ -152,21 +151,21 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
      * @return 粉丝列表
      */
     @Override
-    public Result queryFans(Long id, Integer current) {
+    public List<UserDTO> queryFans(Long id, Integer current) {
         Page<Follow> page = query()
                 .eq("follow_user_id", id)
                 .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
-        
+
         List<Follow> records = page.getRecords();
         if (records == null || records.isEmpty()) {
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
-        
+
         List<UserDTO> userDTOList = records.stream()
                 .map(follow -> userService.getUserDTOById(follow.getUserId()))
                 .collect(Collectors.toList());
-        
-        return Result.ok(userDTOList);
+
+        return userDTOList;
     }
 
     /**
@@ -176,20 +175,20 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
      * @return 关注列表
      */
     @Override
-    public Result queryFollowings(Long id, Integer current) {
+    public List<UserDTO> queryFollowings(Long id, Integer current) {
         Page<Follow> page = query()
                 .eq("user_id", id)
                 .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
-        
+
         List<Follow> records = page.getRecords();
         if (records == null || records.isEmpty()) {
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
-        
+
         List<UserDTO> userDTOList = records.stream()
                 .map(follow -> userService.getUserDTOById(follow.getFollowUserId()))
                 .collect(Collectors.toList());
-        
-        return Result.ok(userDTOList);
+
+        return userDTOList;
     }
 }

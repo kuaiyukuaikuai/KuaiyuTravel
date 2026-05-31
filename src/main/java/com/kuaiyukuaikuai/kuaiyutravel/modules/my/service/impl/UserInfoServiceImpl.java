@@ -4,7 +4,6 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.my.entity.UserInfo;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.mapper.UserInfoMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserInfoService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.dto.UserUpdateDTO;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +13,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> implements UserInfoService {
     @Override
-    public Result getUserInfoDetail(Long userId) {
+    public UserInfo getUserInfoDetail(Long userId) {
         // 查询详情
         UserInfo info = getById(userId);
         if (info == null) {
             // 没有详情，应该是第一次查看详情
-            return Result.ok();
+            return null;
         }
         info.setCreateTime(null);
         info.setUpdateTime(null);
         // 返回
-        return Result.ok(info);
+        return info;
     }
 
     @Override
