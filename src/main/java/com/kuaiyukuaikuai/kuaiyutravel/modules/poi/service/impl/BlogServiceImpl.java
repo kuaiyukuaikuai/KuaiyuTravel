@@ -3,7 +3,8 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.ScrollResult;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Blog;
@@ -15,26 +16,21 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.FollowService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.service.UserService;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import com.kuaiyukuaikuai.kuaiyutravel.common.config.RabbitMQConfig;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import jakarta.annotation.Resource;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 博客服务实现类
  */
+@Slf4j
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
 
@@ -54,19 +50,50 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      * @return 热门博客列表
      */
     @Override
-    public Result queryHotBlog(Integer current) {
+    public List<Blog> queryHotBlog(Integer current) {
         // 根据用户查询
         Page<Blog> page = query()
                 .orderByDesc("liked")
                 .page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         // 获取当前页数据
         List<Blog> records = page.getRecords();
-        // 查询用户
+        if (records.isEmpty()) {
+            return records;
+        }
+
+        // 批量查询用户信息，避免 N+1
+        List<Long> userIds = records.stream()
+                .map(Blog::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, User> userMap = userService.listByIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        // 批量查询点赞状态
+        UserDTO currentUser = UserHolder.getUser();
+        Set<String> likedKeys = records.stream()
+                .map(blog -> "blog:liked:" + blog.getId())
+                .collect(Collectors.toSet());
+
         records.forEach(blog -> {
-            this.queryBlogUser(blog);
-            this.isBlogLiked(blog);
+            // 填充用户信息
+            User user = userMap.get(blog.getUserId());
+            if (user != null) {
+                blog.setIcon(user.getIcon());
+                blog.setName(user.getNickName());
+            } else {
+                blog.setIcon("");
+                blog.setName("未知用户");
+            }
+            // 检查点赞状态
+            if (currentUser != null) {
+                Double score = stringRedisTemplate.opsForZSet()
+                        .score("blog:liked:" + blog.getId(), currentUser.getId().toString());
+                blog.setIsLike(score != null);
+            }
         });
-        return Result.ok(records);
+        return records;
     }
 
     /**
@@ -76,17 +103,17 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      * @return 博客详情
      */
     @Override
-    public Result queryBlogById(Long id) {
+    public Blog queryBlogById(Long id) {
         // 1.查询博客
         Blog blog = getById(id);
         if (blog == null) {
-            return Result.fail("笔记不存在");
+            throw new BusinessException(ErrorCode.BLOG_NOT_FOUND, "笔记不存在");
         }
         // 2.查询用户
         queryBlogUser(blog);
         // 3.查询blog是否被用户点赞
         isBlogLiked(blog);
-        return Result.ok(blog);
+        return blog;
     }
 
     /**
@@ -116,6 +143,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private void queryBlogUser(Blog blog) {
         Long userId = blog.getUserId();
         User user = userService.getById(userId);
+        if (user == null) {
+            blog.setIcon("");
+            blog.setName("未知用户");
+            return;
+        }
         blog.setIcon(user.getIcon());
         blog.setName(user.getNickName());
     }
@@ -124,14 +156,13 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      * 点赞博客
      *
      * @param id 博客ID
-     * @return 操作结果
      */
     @Override
-    public Result likeBlog(Long id) {
+    public void likeBlog(Long id) {
         // 1.获取用户
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
 
@@ -155,7 +186,6 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 stringRedisTemplate.opsForZSet().remove(key, userId.toString());
             }
         }
-        return Result.ok();
     }
 
     /**
@@ -165,50 +195,49 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      * @return 点赞用户列表
      */
     @Override
-    public Result queryBlogLikes(Long id) {
+    public List<UserDTO> queryBlogLikes(Long id) {
         // 1. 查询top5的点赞用户
         String key = "blog:liked:" + id;
         Set<String> top5 = stringRedisTemplate.opsForZSet().range(key, 0, 4);
         // 1.1 判断用户是否为空
         if (top5 == null || top5.isEmpty()) {
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
         // 2.解析出其中的用户id
         List<Long> ids = top5.stream()
                 .map(Long::valueOf)
                 .collect(Collectors.toList());
-        String idStr = StrUtil.join(",", ids);
-
-        // 3.根据用户id查询用户
-        List<UserDTO> userDTOS = userService.query()
-                .in("id", ids).last("ORDER BY FIELD(id," + idStr + ")").list()
-                .stream()
+        // 3.根据用户id查询用户（使用Java排序替代SQL拼接，避免注入风险）
+        List<User> users = userService.listByIds(ids);
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
+        List<UserDTO> userDTOS = ids.stream()
+                .map(userMap::get)
+                .filter(Objects::nonNull)
                 .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
                 .collect(Collectors.toList());
 
         // 4.返回
-        return Result.ok(userDTOS);
+        return userDTOS;
     }
 
     /**
      * 保存博客 (纯 MQ 异步推流 + AI 向量库同步版)
      *
      * @param blog 博客信息
-     * @return 保存结果
      */
     @Override
-    public Result saveBlog(Blog blog) {
+    public void saveBlog(Blog blog) {
         // 1. 获取登录用户
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         blog.setUserId(user.getId());
 
         // 2. 保存探店博文到数据库
         boolean isSuccess = save(blog);
         if (!isSuccess) {
-            return Result.fail("新增笔记失败");
+            throw new BusinessException(ErrorCode.SERVER_ERROR, "新增笔记失败");
         }
 
         // 3. 异步推送笔记给粉丝 (原有逻辑)
@@ -223,17 +252,14 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 message);
 
         // ==========================================
-        // 🚀 4. 纯 MQ 方案核心改造：投递给 AI 知识库同步队列
+        // 4. 纯 MQ 方案核心改造：投递给 AI 知识库同步队列
         // ==========================================
         // 这里只发送刚保存的游记 ID，让消费者自己去查数据库，保证数据是最新的
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.BLOG_EXCHANGE,
-                RabbitMQConfig.AI_SYNC_ROUTING_KEY, // 新增：专门用于 AI 同步的路由键
+                RabbitMQConfig.AI_SYNC_ROUTING_KEY, // AI 知识库同步专用路由键
                 blog.getId()
         );
-
-        // 5. 立刻返回id给前端
-        return Result.ok(blog.getId());
     }
 
     /**
@@ -244,11 +270,11 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      * @return 博客列表
      */
     @Override
-    public Result queryBlogOfFollow(Long max, Integer offset) {
+    public ScrollResult queryBlogOfFollow(Long max, Integer offset) {
         // 1.获取当前用户
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
 
@@ -258,7 +284,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 .reverseRangeByScoreWithScores(key, 0, max, offset, 2);
 
         if (typedTuples == null || typedTuples.isEmpty()) {
-            return Result.ok();
+            return new ScrollResult();
         }
         // 3.解析数据
         List<Long> ids = new ArrayList<>(typedTuples.size());
@@ -277,21 +303,21 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 os = 1;
             }
         }
-        // 4.根据id查询blog
-        String idStr = StrUtil.join(",", ids);
-        List<Blog> blogs = query().in("id", ids).last("ORDER BY FIELD(id," + idStr + ")").list();
-        for (Blog blog : blogs) {
-            // 5.查询blog有关的用户
-            queryBlogUser(blog);
-            // 6.查询blog是否被点赞
-            isBlogLiked(blog);
-        }
+        // 4.根据id查询blog（使用Java排序替代SQL拼接，避免注入风险）
+        List<Blog> blogList = query().in("id", ids).list();
+        Map<Long, Blog> blogMap = blogList.stream().collect(Collectors.toMap(Blog::getId, b -> b));
+        List<Blog> blogs = ids.stream()
+                .map(blogMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        // 5. 批量查询用户信息和点赞状态，避免 N+1
+        fillBlogUserAndLikeInfo(blogs);
         // 7.封装并返回
         ScrollResult scrollResult = new ScrollResult();
         scrollResult.setList(blogs);
         scrollResult.setOffset(os);
         scrollResult.setMinTime(minTime);
-        return Result.ok(scrollResult);
+        return scrollResult;
     }
 
     /**
@@ -302,12 +328,12 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
      * @return 博客列表
      */
     @Override
-    public Result queryBlogByPoiId(Integer current, Long poiId) {
+    public List<Blog> queryBlogByPoiId(Integer current, Long poiId) {
         // 深度分页防御机制
         // 如果用户恶意传入非常大的页码（比如大于 100），直接返回空列表
         if (current > 100) {
             // 返回空数组，不去给 MySQL 数据库施加压力
-            return Result.ok(Collections.emptyList());
+            return Collections.emptyList();
         }
         // 1.根据地点id查询博客
         Page<Blog> page = query()
@@ -315,59 +341,106 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 .orderByDesc("id")
                 .page(new Page<>(current, SystemConstants.DEFAULT_PAGE_SIZE));
         List<Blog> blogs = page.getRecords();
-        // 2.封装并返回
-        // 3. 核心修改：遍历集合，查询并填充每个 blog 的用户信息和点赞状态
+        // 2. 批量查询用户信息和点赞状态，避免 N+1
         if (blogs != null && !blogs.isEmpty()) {
-            blogs.forEach(blog -> {
-                // 查询博主信息（头像、昵称）
-                this.queryBlogUser(blog);
-                // 查询当前登录用户是否点赞了该博客
-                this.isBlogLiked(blog);
-            });
+            fillBlogUserAndLikeInfo(blogs);
         }
-        return Result.ok(blogs);
+        return blogs;
+    }
+
+    /**
+     * 批量填充博客的用户信息和当前登录用户的点赞状态。
+     *
+     * <p>将逐条查询改为批量查询，避免 N+1 问题。</p>
+     *
+     * @param blogs 博客列表
+     */
+    private void fillBlogUserAndLikeInfo(List<Blog> blogs) {
+        if (blogs == null || blogs.isEmpty()) {
+            return;
+        }
+
+        // 1. 批量查询用户信息
+        List<Long> userIds = blogs.stream()
+                .map(Blog::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, User> userMap = userService.listByIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        // 2. 批量查询点赞状态（当前登录用户）
+        UserDTO currentUser = UserHolder.getUser();
+        Map<Long, Boolean> likeMap = new HashMap<>();
+        if (currentUser != null) {
+            for (Blog blog : blogs) {
+                Double score = stringRedisTemplate.opsForZSet()
+                        .score("blog:liked:" + blog.getId(), currentUser.getId().toString());
+                likeMap.put(blog.getId(), score != null);
+            }
+        }
+
+        // 3. 填充信息
+        blogs.forEach(blog -> {
+            User user = userMap.get(blog.getUserId());
+            if (user != null) {
+                blog.setIcon(user.getIcon());
+                blog.setName(user.getNickName());
+            } else {
+                blog.setIcon("");
+                blog.setName("未知用户");
+            }
+            if (currentUser != null) {
+                blog.setIsLike(likeMap.getOrDefault(blog.getId(), false));
+            }
+        });
     }
 
     /**
      * 检查是否有新动态（返回未读数量）
      */
     @Override
-    public Result checkRedDot() {
+    public Boolean checkRedDot() {
         // 1. 获取当前登录用户
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
 
         // 2. 获取该用户最后一次阅读动态的时间
         String timeStr = stringRedisTemplate.opsForValue().get("feed:read_time:" + userId);
         // 如果 Redis 里没有记录，说明这是新用户或者从来没点开过，默认时间给 0
-        long lastReadTime = StrUtil.isBlank(timeStr) ? 0L : Long.parseLong(timeStr);
+        long lastReadTime = 0L;
+        if (StrUtil.isNotBlank(timeStr)) {
+            try {
+                lastReadTime = Long.parseLong(timeStr);
+            } catch (NumberFormatException e) {
+                log.warn("feed read time format invalid: {}", timeStr);
+            }
+        }
 
         // 3. 统计 ZSet 收件箱中，时间戳大于 lastReadTime 的动态数量
         // lastReadTime + 1 相当于开区间 (lastReadTime, +∞)
         Long unreadCount = stringRedisTemplate.opsForZSet().count("feed:" + userId, lastReadTime + 1, Double.MAX_VALUE);
 
         // 4. 返回具体的未读数量（如果为null则返回0）
-        return Result.ok(unreadCount != null ? unreadCount : 0);
+        return unreadCount != null && unreadCount > 0;
     }
 
     /**
      * 清除新动态红点（更新最后阅读时间）
      */
     @Override
-    public Result clearRedDot() {
+    public void clearRedDot() {
         // 1. 获取当前登录用户
         UserDTO user = UserHolder.getUser();
         if (user == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
         Long userId = user.getId();
 
         // 2. 将最后阅读时间更新为当前的最新时间戳
         stringRedisTemplate.opsForValue().set("feed:read_time:" + userId, String.valueOf(System.currentTimeMillis()));
-
-        return Result.ok();
     }
 }

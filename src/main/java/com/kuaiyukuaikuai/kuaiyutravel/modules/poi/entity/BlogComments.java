@@ -3,6 +3,9 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -10,14 +13,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author 0
- * @since 2026-04-17
- */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
@@ -26,55 +21,28 @@ public class BlogComments implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键
-     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 用户id
-     */
     private Long userId;
 
-    /**
-     * 探店id
-     */
+    @NotNull(message = "博客ID不能为空")
     private Long blogId;
 
-    /**
-     * 关联的1级评论id，如果是一级评论，则值为0
-     */
     private Long parentId;
 
-    /**
-     * 回复的评论id
-     */
     private Long answerId;
 
-    /**
-     * 回复的内容
-     */
+    @NotBlank(message = "评论内容不能为空")
+    @Size(max = 500, message = "评论内容长度不能超过500个字符")
     private String content;
 
-    /**
-     * 点赞数
-     */
     private Integer liked;
 
-    /**
-     * 状态，0：正常，1：被举报，2：禁止查看
-     */
     private Integer status;
 
-    /**
-     * 创建时间
-     */
     private LocalDateTime createTime;
 
-    /**
-     * 更新时间
-     */
     private LocalDateTime updateTime;
 
 }

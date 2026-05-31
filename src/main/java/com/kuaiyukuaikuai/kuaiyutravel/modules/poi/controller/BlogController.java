@@ -11,12 +11,13 @@ import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import java.util.List;
 
 /**
  * 博客控制器
  * 处理博客相关的请求
- * 
+ *
  * @author 0
  * @since 2026-04-17
  */
@@ -29,30 +30,32 @@ public class BlogController {
 
     /**
      * 保存博客
-     * 
+     *
      * @param blog 博客信息
      * @return 保存结果
      */
     @RateLimit(time = 60, msg = "发布博客太快啦，请60秒后再试", prefix = "blog:save:")
     @PostMapping
-    public Result saveBlog(@RequestBody Blog blog) {
-        return blogService.saveBlog(blog);
+    public Result saveBlog(@RequestBody @Valid Blog blog) {
+        blogService.saveBlog(blog);
+        return Result.ok(blog.getId());
     }
 
     /**
      * 点赞博客
-     * 
+     *
      * @param id 博客id
      * @return 点赞结果
      */
     @PutMapping("/like/{id}")
     public Result likeBlog(@PathVariable("id") Long id) {
-        return blogService.likeBlog(id);
+        blogService.likeBlog(id);
+        return Result.ok();
     }
 
     /**
      * 查询我的博客
-     * 
+     *
      * @param current 当前页码
      * @return 博客列表
      */
@@ -73,40 +76,40 @@ public class BlogController {
 
     /**
      * 查询热门博客
-     * 
+     *
      * @param current 当前页码
      * @return 热门博客列表
      */
     @GetMapping("/hot")
     public Result queryHotBlog(@RequestParam(value = "current", defaultValue = "1") Integer current) {
-        return blogService.queryHotBlog(current);
+        return Result.ok(blogService.queryHotBlog(current));
     }
 
     /**
      * 根据id查询博客
-     * 
+     *
      * @param id 博客id
      * @return 博客详情
      */
     @GetMapping("/{id}")
     public Result queryBlogById(@PathVariable("id") Long id) {
-        return blogService.queryBlogById(id);
+        return Result.ok(blogService.queryBlogById(id));
     }
 
     /**
      * 查询博客点赞列表
-     * 
+     *
      * @param id 博客id
      * @return 点赞用户列表
      */
     @GetMapping("/likes/{id}")
     public Result queryBlogLikes(@PathVariable("id") Long id) {
-        return blogService.queryBlogLikes(id);
+        return Result.ok(blogService.queryBlogLikes(id));
     }
 
     /**
      * 根据用户id查询博客
-     * 
+     *
      * @param current 当前页码
      * @param id 用户id
      * @return 博客列表
@@ -125,7 +128,7 @@ public class BlogController {
 
     /**
      * 查询关注的用户博客
-     * 
+     *
      * @param max 最大id
      * @param offset 偏移量
      * @return 博客列表
@@ -133,7 +136,7 @@ public class BlogController {
     @GetMapping("/of/follow")
     public Result queryBlogOfFollow(
             @RequestParam("lastId") Long max, @RequestParam(value = "offset", defaultValue = "0") Integer offset) {
-        return blogService.queryBlogOfFollow(max, offset);
+        return Result.ok(blogService.queryBlogOfFollow(max, offset));
     }
 
     /**
@@ -147,24 +150,25 @@ public class BlogController {
     public Result queryBlogByPoiId(
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam("poiId") Long poiId) {
-        return blogService.queryBlogByPoiId(current, poiId);
+        return Result.ok(blogService.queryBlogByPoiId(current, poiId));
     }
 
     /**
      * 检查是否有新动态（红点）
-     * * @return true表示有红点，false表示没有
+     * @return true表示有红点，false表示没有
      */
     @GetMapping("/feed/red-dot")
     public Result checkRedDot() {
-        return blogService.checkRedDot();
+        return Result.ok(blogService.checkRedDot());
     }
 
     /**
      * 清除新动态红点（更新最后阅读时间）
-     * * @return 操作结果
+     * @return 操作结果
      */
     @PutMapping("/feed/read")
     public Result clearRedDot() {
-        return blogService.clearRedDot();
+        blogService.clearRedDot();
+        return Result.ok();
     }
 }

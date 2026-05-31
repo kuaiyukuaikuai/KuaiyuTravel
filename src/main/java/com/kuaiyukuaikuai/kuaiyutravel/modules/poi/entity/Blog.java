@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -11,14 +14,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author 0
- * @since 2026-04-17
- */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
@@ -27,68 +22,40 @@ public class Blog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键
-     */
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-    /**
-     * 商户id
-     */
+
+    @NotNull(message = "地点ID不能为空")
     private Long poiId;
-    /**
-     * 用户id
-     */
+
     private Long userId;
-    /**
-     * 用户图标
-     */
+
     @TableField(exist = false)
     private String icon;
-    /**
-     * 用户姓名
-     */
+
     @TableField(exist = false)
     private String name;
-    /**
-     * 是否点赞过了
-     */
+
     @TableField(exist = false)
     private Boolean isLike;
 
-    /**
-     * 标题
-     */
+    @NotBlank(message = "博客标题不能为空")
+    @Size(max = 100, message = "标题长度不能超过100个字符")
     private String title;
 
-    /**
-     * 探店的照片，最多9张，多张以","隔开
-     */
+    @Size(max = 1000, message = "图片链接长度不能超过1000个字符")
     private String images;
 
-    /**
-     * 探店的文字描述
-     */
+    @NotBlank(message = "博客内容不能为空")
+    @Size(max = 2000, message = "内容长度不能超过2000个字符")
     private String content;
 
-    /**
-     * 点赞数量
-     */
     private Integer liked;
 
-    /**
-     * 评论数量
-     */
     private Integer comments;
 
-    /**
-     * 创建时间
-     */
     private LocalDateTime createTime;
 
-    /**
-     * 更新时间
-     */
     private LocalDateTime updateTime;
 
 }

@@ -1,7 +1,6 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service;
 
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.Poi;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -16,14 +15,13 @@ public interface PoiService extends IService<Poi> {
      * @param id 景点ID
      * @return 景点详情
      */
-    Result queryPoiById(Long id);
+    Poi queryPoiById(Long id);
 
     /**
      * 更新景点信息
      * @param poi 景点信息
-     * @return 操作结果
      */
-    Result update(Poi poi);
+    void update(Poi poi);
 
     /**
      * 根据类型查询景点
@@ -33,7 +31,7 @@ public interface PoiService extends IService<Poi> {
      * @param y 纬度
      * @return 景点列表
      */
-    Result queryPoiByType(Integer typeId, Integer current, Double x, Double y);
+    List<Poi> queryPoiByType(Integer typeId, Integer current, Double x, Double y);
 
     /**
      * 使用布隆过滤器保存景点

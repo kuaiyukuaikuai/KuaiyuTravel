@@ -4,6 +4,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.PoiComment;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.PoiCommentService;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -21,14 +22,15 @@ public class PoiCommentController {
      * POST /poi-comment/add
      */
     @PostMapping("/add")
-    public Result addComment(@RequestBody PoiComment poiComment) {
+    public Result addComment(@RequestBody @Valid PoiComment poiComment) {
         if (poiComment.getPoiId() == null) {
             return Result.fail("地点ID不能为空");
         }
         if (poiComment.getContent() == null || poiComment.getContent().trim().isEmpty()) {
             return Result.fail("评价内容不能为空");
         }
-        return poiCommentService.saveComment(poiComment);
+        poiCommentService.saveComment(poiComment);
+        return Result.ok();
     }
 
     /**
@@ -40,7 +42,7 @@ public class PoiCommentController {
             @PathVariable("poiId") Long poiId,
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam(value = "size", defaultValue = "5") Integer size) {
-        
-        return poiCommentService.queryCommentPage(poiId, current, size);
+
+        return Result.ok(poiCommentService.queryCommentPage(poiId, current, size));
     }
 }

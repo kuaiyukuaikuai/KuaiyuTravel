@@ -119,7 +119,7 @@ public class Poi implements Serializable {
     /**
      * 联系电话
      */
-    private String phone; // 新增字段
+    private String phone;
 
     // 高德地图原POI唯一标识
     private String amapId;

@@ -4,13 +4,14 @@ import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.BlogComments;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.BlogCommentsService;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * 博客评论控制器
  * 处理博客评论相关的请求
- * 
+ *
  * @author 0
  * @since 2026-04-17
  */
@@ -28,8 +29,9 @@ public class BlogCommentsController {
      * @return 操作结果
      */
     @PostMapping
-    public Result saveComment(@RequestBody BlogComments comment) {
-        return blogCommentsService.saveComment(comment);
+    public Result saveComment(@RequestBody @Valid BlogComments comment) {
+        blogCommentsService.saveComment(comment);
+        return Result.ok();
     }
 
     /**
@@ -40,7 +42,7 @@ public class BlogCommentsController {
      */
     @GetMapping
     public Result queryComments(@RequestParam Long blogId, @RequestParam(defaultValue = "1") Integer current) {
-        return blogCommentsService.queryCommentsByBlogId(blogId, current);
+        return Result.ok(blogCommentsService.queryCommentsByBlogId(blogId, current));
     }
 
     /**
@@ -50,6 +52,7 @@ public class BlogCommentsController {
      */
     @PutMapping("/like/{id}")
     public Result likeComment(@PathVariable Long id) {
-        return blogCommentsService.likeComment(id);
+        blogCommentsService.likeComment(id);
+        return Result.ok();
     }
 }

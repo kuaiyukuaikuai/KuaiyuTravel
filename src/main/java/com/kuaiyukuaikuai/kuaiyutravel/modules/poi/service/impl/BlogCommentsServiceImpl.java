@@ -1,7 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.service.impl;
 
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.vo.BlogCommentsVO;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.my.vo.UserDTO;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity.BlogComments;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.poi.mapper.BlogCommentsMapper;
@@ -40,15 +41,14 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
     /**
      * 新增评论
      * @param blogComments 评论信息
-     * @return 操作结果
      */
     @Override
     @Transactional
-    public Result saveComment(BlogComments blogComments) {
+    public void saveComment(BlogComments blogComments) {
         // 1. 从UserHolder获取当前登录用户
         UserDTO userDTO = UserHolder.getUser();
         if (userDTO == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
 
         // 2. 注入用户ID
@@ -70,9 +70,8 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
                     .setSql("comments = comments + 1")
                     .eq("id", blogComments.getBlogId())
                     .update();
-            return Result.ok();
         } else {
-            return Result.fail("评论保存失败");
+            throw new BusinessException(ErrorCode.SERVER_ERROR, "评论保存失败");
         }
     }
 
@@ -83,7 +82,7 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
      * @return 评论列表
      */
     @Override
-    public Result queryCommentsByBlogId(Long blogId, Integer current) {
+    public List<BlogCommentsVO> queryCommentsByBlogId(Long blogId, Integer current) {
         // 1. 分页查询顶级评论（parentId为0或null）
         Page<BlogComments> page = query()
                 .eq("blog_id", blogId)
@@ -102,22 +101,22 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
             List<Long> topLevelIds = topLevelComments.stream()
                     .map(BlogCommentsVO::getId)
                     .collect(Collectors.toList());
-            
+
             // 3.2 一次性查询所有子评论
             List<BlogComments> childComments = query()
                     .in("parent_id", topLevelIds)
                     .orderByAsc("create_time")
                     .list();
-            
+
             // 3.3 转换子评论为VO
             List<BlogCommentsVO> childCommentVOs = childComments.stream()
                     .map(this::convertToVO)
                     .collect(Collectors.toList());
-            
+
             // 3.4 按parentId分组
             Map<Long, List<BlogCommentsVO>> childCommentsMap = childCommentVOs.stream()
                     .collect(Collectors.groupingBy(BlogCommentsVO::getParentId));
-            
+
             // 3.5 为每个顶级评论设置子评论
             topLevelComments.forEach(commentVO -> {
                 commentVO.setChildren(childCommentsMap.getOrDefault(commentVO.getId(), Collections.emptyList()));
@@ -135,13 +134,13 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
                     comment.getChildren().forEach(child -> allCommentIds.add(child.getId()));
                 }
             });
-            
+
             // 4.2 批量检查点赞状态
             Map<Long, Boolean> likedMap = new HashMap<>();
             allCommentIds.forEach(id -> {
                 likedMap.put(id, isLiked(id, userDTO.getId()));
             });
-            
+
             // 4.3 设置点赞状态
             topLevelComments.forEach(comment -> {
                 // 检查顶级评论是否已点赞
@@ -155,21 +154,20 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
             });
         }
 
-        return Result.ok(voPage);
+        return topLevelComments;
     }
 
     /**
      * 评论点赞
      * @param commentId 评论ID
-     * @return 操作结果
      */
     @Override
     @Transactional
-    public Result likeComment(Long commentId) {
+    public void likeComment(Long commentId) {
         // 1. 从UserHolder获取当前登录用户
         UserDTO userDTO = UserHolder.getUser();
         if (userDTO == null) {
-            return Result.fail("用户未登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户未登录");
         }
 
         Long userId = userDTO.getId();
@@ -182,13 +180,11 @@ public class BlogCommentsServiceImpl extends ServiceImpl<BlogCommentsMapper, Blo
             stringRedisTemplate.opsForSet().remove(key, userId.toString());
             // 更新数据库点赞数
             update().setSql("liked = liked - 1").eq("id", commentId).update();
-            return Result.ok("取消点赞成功");
         } else {
             // 未点赞，添加点赞
             stringRedisTemplate.opsForSet().add(key, userId.toString());
             // 更新数据库点赞数
             update().setSql("liked = liked + 1").eq("id", commentId).update();
-            return Result.ok("点赞成功");
         }
     }
 

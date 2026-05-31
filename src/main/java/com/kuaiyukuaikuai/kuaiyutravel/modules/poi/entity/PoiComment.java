@@ -3,14 +3,16 @@ package com.kuaiyukuaikuai.kuaiyutravel.modules.poi.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * POI地点评价表 实体类
- */
 @Data
 @TableName("tb_poi_comment")
 public class PoiComment implements Serializable {
@@ -18,21 +20,21 @@ public class PoiComment implements Serializable {
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
-    /** 评价的地点ID */
+    @NotNull(message = "地点ID不能为空")
     private Long poiId;
 
-    /** 评价者用户ID */
     private Long userId;
 
-    /** 评价内容 */
+    @NotBlank(message = "评价内容不能为空")
+    @Size(max = 500, message = "评价内容长度不能超过500个字符")
     private String content;
 
-    /** 评分 (1-5星) */
+    @Min(value = 1, message = "评分最低为1星")
+    @Max(value = 5, message = "评分最高为5星")
     private Integer score;
 
-    /** 评价时间 */
     private LocalDateTime createTime;
 
-    /** 更新时间 */
     private LocalDateTime updateTime;
+
 }
