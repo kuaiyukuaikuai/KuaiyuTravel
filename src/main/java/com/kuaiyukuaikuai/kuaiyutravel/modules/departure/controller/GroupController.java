@@ -5,6 +5,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Group;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.GroupService;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 
 /**
  * 组团出发控制器
@@ -35,8 +36,8 @@ public class GroupController {
      * @return Result 返回创建的组团编号（groupNo）
      */
     @PostMapping("/create")
-    public Result createGroup(@RequestBody Group group) {
-        return groupService.createGroup(group);
+    public Result createGroup(@RequestBody @Valid Group group) {
+        return Result.ok(groupService.createGroup(group));
     }
 
     /**
@@ -47,7 +48,7 @@ public class GroupController {
      */
     @GetMapping("/query/{groupNo}")
     public Result queryByGroupNo(@PathVariable("groupNo") String groupNo) {
-        return groupService.queryByGroupNo(groupNo);
+        return Result.ok(groupService.queryByGroupNo(groupNo));
     }
 
     /**
@@ -60,8 +61,9 @@ public class GroupController {
      * @return Result 更新结果
      */
     @PutMapping("/update")
-    public Result updateGroup(@RequestBody Group group) {
-        return groupService.updateGroup(group);
+    public Result updateGroup(@RequestBody @Valid Group group) {
+        groupService.updateGroup(group);
+        return Result.ok();
     }
 
     /**
@@ -75,7 +77,8 @@ public class GroupController {
      */
     @DeleteMapping("/{groupNo}")
     public Result deleteGroup(@PathVariable("groupNo") String groupNo) {
-        return groupService.deleteGroupByNo(groupNo);
+        groupService.deleteGroupByNo(groupNo);
+        return Result.ok();
     }
 
     /**
@@ -89,6 +92,6 @@ public class GroupController {
     public Result queryGroupPage(
             @RequestParam(value = "current", defaultValue = "1") Integer current,
             @RequestParam(value = "size", defaultValue = "10") Integer size) {
-        return groupService.queryGroupPage(current, size);
+        return Result.ok(groupService.queryGroupPage(current, size));
     }
 }

@@ -1,8 +1,8 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Group;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 
 /**
  * 组团业务接口
@@ -12,29 +12,34 @@ public interface GroupService extends IService<Group> {
 
     /**
      * 发起组团
+     *
+     * @return 创建的组团编号（groupNo）
      */
-    Result createGroup(Group group);
+    String createGroup(Group group);
 
     /**
      * 根据编号查询组团详情
+     *
+     * @return 组团详情
      */
-    Result queryByGroupNo(String groupNo);
+    Group queryByGroupNo(String groupNo);
 
     /**
      * 修改组团信息（支持局部更新，需校验团长权限）
      */
-    Result updateGroup(Group group);
+    void updateGroup(Group group);
 
     /**
      * 解散/删除组团（通过团号，需校验团长权限）
      */
-    Result deleteGroupByNo(String groupNo);
+    void deleteGroupByNo(String groupNo);
 
     /**
      * 分页查询所有组团信息 (招募中)
-     * 
+     *
      * @param current 当前页码
      * @param size    每页大小
+     * @return 分页数据
      */
-    Result queryGroupPage(Integer current, Integer size);
+    Page<Group> queryGroupPage(Integer current, Integer size);
 }

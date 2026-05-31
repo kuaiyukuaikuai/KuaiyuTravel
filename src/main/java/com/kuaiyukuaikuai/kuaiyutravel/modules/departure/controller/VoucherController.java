@@ -6,6 +6,7 @@ import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.VoucherService;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
 
 /**
  * 优惠券控制器
@@ -28,7 +29,7 @@ public class VoucherController {
      * @return 优惠券id
      */
     @PostMapping
-    public Result addVoucher(@RequestBody Voucher voucher) {
+    public Result addVoucher(@RequestBody @Valid Voucher voucher) {
         voucherService.save(voucher);
         return Result.ok(voucher.getId());
     }
@@ -40,7 +41,7 @@ public class VoucherController {
      * @return 优惠券id
      */
     @PostMapping("seckill")
-    public Result addSeckillVoucher(@RequestBody Voucher voucher) {
+    public Result addSeckillVoucher(@RequestBody @Valid Voucher voucher) {
         voucherService.addSeckillVoucher(voucher);
         return Result.ok(voucher.getId());
     }

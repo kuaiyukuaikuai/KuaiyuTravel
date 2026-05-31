@@ -23,7 +23,8 @@ public class GroupMemberController {
      */
     @PostMapping("/join/{groupNo}")
     public Result joinGroup(@PathVariable("groupNo") String groupNo) {
-        return groupMemberService.joinGroup(groupNo);
+        groupMemberService.joinGroup(groupNo);
+        return Result.ok();
     }
 
     /**
@@ -32,7 +33,7 @@ public class GroupMemberController {
      */
     @GetMapping("/list/by-groupno/{groupNo}")
     public Result getMembersByGroupNo(@PathVariable("groupNo") String groupNo) {
-        return groupMemberService.getMembersByGroupNo(groupNo);
+        return Result.ok(groupMemberService.getMembersByGroupNo(groupNo));
     }
 
     /**
@@ -41,7 +42,7 @@ public class GroupMemberController {
      */
     @GetMapping("/my")
     public Result getMyJoinedGroups() {
-        return groupMemberService.getMyJoinedGroups();
+        return Result.ok(groupMemberService.getMyJoinedGroups());
     }
 
     /**
@@ -55,7 +56,8 @@ public class GroupMemberController {
     public Result removeMemberByNo(
             @PathVariable("groupNo") String groupNo,
             @PathVariable("userId") Long userId) {
-        return groupMemberService.removeMemberByNo(groupNo, userId);
+        groupMemberService.removeMemberByNo(groupNo, userId);
+        return Result.ok();
     }
 
     /**
@@ -64,39 +66,42 @@ public class GroupMemberController {
      */
     @DeleteMapping("/exit/by-groupno/{groupNo}")
     public Result exitGroupByNo(@PathVariable("groupNo") String groupNo) {
-        return groupMemberService.exitGroupByNo(groupNo);
+        groupMemberService.exitGroupByNo(groupNo);
+        return Result.ok();
     }
 
     // ==================== 以下为向后兼容的旧接口（基于ID） ====================
 
     /**
      * 【查询成员】查看某个组团里有哪些人（通过ID，向后兼容）
-     * 
+     *
      * @deprecated 建议使用 GET /group-member/list/by-groupno/{groupNo}
      */
     @GetMapping("/list/{groupId}")
     public Result getMembersByGroupId(@PathVariable("groupId") Long groupId) {
-        return groupMemberService.getMembersByGroupId(groupId);
+        return Result.ok(groupMemberService.getMembersByGroupId(groupId));
     }
 
     /**
      * 【踢人】团长移除某个成员（通过ID，向后兼容）
-     * 
+     *
      * @deprecated 建议使用 DELETE /group-member/kick/by-groupno/{groupNo}/{userId}
      */
     @DeleteMapping("/kick/{groupId}/{userId}")
     public Result removeMember(@PathVariable("groupId") Long groupId,
             @PathVariable("userId") Long userId) {
-        return groupMemberService.removeMember(groupId, userId);
+        groupMemberService.removeMember(groupId, userId);
+        return Result.ok();
     }
 
     /**
      * 【退出】普通成员主动退出组团（通过ID，向后兼容）
-     * 
+     *
      * @deprecated 建议使用 DELETE /group-member/exit/by-groupno/{groupNo}
      */
     @DeleteMapping("/exit/{groupId}")
     public Result exitGroup(@PathVariable("groupId") Long groupId) {
-        return groupMemberService.exitGroup(groupId);
+        groupMemberService.exitGroup(groupId);
+        return Result.ok();
     }
 }

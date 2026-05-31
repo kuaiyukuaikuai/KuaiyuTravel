@@ -4,14 +4,17 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.BusinessException;
+import com.kuaiyukuaikuai.kuaiyutravel.common.exception.ErrorCode;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.SystemConstants;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.Group;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.GroupMember;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.enums.GroupStatus;
+import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.enums.MemberRole;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.mapper.GroupMapper;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.GroupMemberService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service.GroupService;
 import com.kuaiyukuaikuai.kuaiyutravel.common.utils.UserHolder;
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,39 +33,42 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result createGroup(Group group) {
+    public String createGroup(Group group) {
+        // 1. 参数校验（事务外前置校验）
         if (group.getTitle() == null || group.getTitle().trim().isEmpty()) {
-            return Result.fail("组团标题不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "组团标题不能为空");
         }
         if (group.getMaxPeople() == null || group.getMaxPeople() <= 0) {
-            return Result.fail("人数上限必须大于0");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "人数上限必须大于0");
         }
 
-        Long userId = UserHolder.getUser().getId();
+        Long userId = UserHolder.getUserId();
         group.setLeaderId(userId);
 
+        // 2. 生成团号（事务外）
         String dateStr = DateUtil.format(LocalDateTime.now(), "yyyyMMdd");
         String randomStr = RandomUtil.randomString(4).toUpperCase();
         group.setGroupNo("KY-" + dateStr + "-" + randomStr);
 
         group.setCurrentPeople(1);
-        group.setStatus(0);
+        group.setStatus(GroupStatus.RECRUITING.getCode());
 
+        // 3. 数据库操作（受 Spring AOP 事务代理保护）
         this.save(group);
 
         GroupMember member = new GroupMember();
         member.setGroupId(group.getId());
         member.setUserId(userId);
-        member.setRole(0);
+        member.setRole(MemberRole.LEADER.getCode());
         groupMemberService.save(member);
 
-        return Result.ok(group.getGroupNo());
+        return group.getGroupNo();
     }
 
     @Override
-    public Result queryByGroupNo(String groupNo) {
+    public Group queryByGroupNo(String groupNo) {
         if (groupNo == null || groupNo.trim().isEmpty()) {
-            return Result.fail("组团编号不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "组团编号不能为空");
         }
 
         Group group = lambdaQuery()
@@ -70,13 +76,13 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
                 .one();
 
         if (group == null) {
-            return Result.fail("未找到该组团信息");
+            throw new BusinessException(ErrorCode.GROUP_NOT_FOUND, "未找到该组团信息");
         }
-        return Result.ok(group);
+        return group;
     }
 
     @Override
-    public Result updateGroup(Group group) {
+    public void updateGroup(Group group) {
         // 优先使用 groupNo 查询，如果 groupNo 为空则使用 id（向后兼容）
         Group oldGroup;
 
@@ -89,16 +95,16 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
             // 向后兼容：通过 ID 查询
             oldGroup = getById(group.getId());
         } else {
-            return Result.fail("组团ID或团号不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "组团ID或团号不能为空");
         }
 
         if (oldGroup == null) {
-            return Result.fail("组团不存在");
+            throw new BusinessException(ErrorCode.GROUP_NOT_FOUND, "组团不存在");
         }
 
-        Long currentUserId = UserHolder.getUser().getId();
+        Long currentUserId = UserHolder.getUserId();
         if (!oldGroup.getLeaderId().equals(currentUserId)) {
-            return Result.fail("只有团长可以修改组团信息！");
+            throw new BusinessException(ErrorCode.GROUP_NO_PERMISSION, "只有团长可以修改组团信息！");
         }
 
         // 防篡改保护：不允许修改这些关键字段
@@ -110,7 +116,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         // 确保使用正确的 ID 进行更新
         group.setId(oldGroup.getId());
         updateById(group);
-        return Result.ok();
     }
 
     /**
@@ -119,10 +124,10 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result deleteGroupByNo(String groupNo) {
+    public void deleteGroupByNo(String groupNo) {
         // 1. 参数校验
         if (groupNo == null || groupNo.trim().isEmpty()) {
-            return Result.fail("组团编号不能为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "组团编号不能为空");
         }
 
         // 2. 通过 groupNo 查询组团信息，获取真实的 groupId（Long 类型）
@@ -131,13 +136,13 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
                 .one();
 
         if (group == null) {
-            return Result.ok(); // 不存在则视为成功（幂等性）
+            return; // 不存在则视为成功（幂等性）
         }
 
         // 3. 校验团长权限
-        Long currentUserId = UserHolder.getUser().getId();
+        Long currentUserId = UserHolder.getUserId();
         if (!group.getLeaderId().equals(currentUserId)) {
-            return Result.fail("只有团长可以解散组团！");
+            throw new BusinessException(ErrorCode.GROUP_NO_PERMISSION, "只有团长可以解散组团！");
         }
 
         // 4. 获取精确的 groupId 进行删除操作
@@ -150,15 +155,13 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         groupMemberService.lambdaUpdate()
                 .eq(GroupMember::getGroupId, groupId)
                 .remove();
-
-        return Result.ok();
     }
 
     /**
      * 分页查询所有招募中的组团信息
      */
     @Override
-    public Result queryGroupPage(Integer current, Integer size) {
+    public Page<Group> queryGroupPage(Integer current, Integer size) {
         // 1. 分页参数健壮性处理
         if (current == null || current < 1) {
             current = 1;
@@ -176,11 +179,11 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
 
         // 3. 执行条件查询并分页
         lambdaQuery()
-                .eq(Group::getStatus, 0) // 只查询招募中的
+                .eq(Group::getStatus, GroupStatus.RECRUITING.getCode()) // 只查询招募中的
                 .orderByDesc(Group::getCreateTime) // 按发布时间倒序
                 .page(page);
 
         // 4. 返回完整的分页元数据对象，包含 total, pages, records 等
-        return Result.ok(page);
+        return page;
     }
 }

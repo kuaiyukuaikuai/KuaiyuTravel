@@ -1,6 +1,5 @@
 package com.kuaiyukuaikuai.kuaiyutravel.modules.departure.service;
 
-import com.kuaiyukuaikuai.kuaiyutravel.common.utils.Result;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.entity.VoucherOrder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.kuaiyukuaikuai.kuaiyutravel.modules.departure.vo.VoucherOrderVO;
@@ -14,9 +13,9 @@ public interface VoucherOrderService extends IService<VoucherOrder> {
     /**
      * 秒杀优惠券
      * @param voucherId 优惠券ID
-     * @return 操作结果
+     * @return 订单ID
      */
-    Result seckillVoucher(Long voucherId);
+    Long seckillVoucher(Long voucherId);
 
     /**
      * 创建优惠券订单
@@ -27,13 +26,13 @@ public interface VoucherOrderService extends IService<VoucherOrder> {
     /**
      * 普通优惠券
      * @param voucherId 优惠券ID
-     * @return 操作结果
+     * @return 订单ID
      */
-    Result commonVoucher(Long voucherId);
+    Long commonVoucher(Long voucherId);
 
     /**
      * 查询我的订单列表
      * @return 订单列表
      */
-    Result queryMyOrders();
+    List<VoucherOrderVO> queryMyOrders();
 }
